@@ -1,0 +1,661 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
+import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
+import SearchInput from '@/components/ui/SearchInput';
+import Badge from '@/components/ui/Badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { sales as initialSales, cars } from '@/data/dummy';
+import {
+  formatCurrency,
+  formatDate,
+  generateId,
+  generateDocNumber,
+  getStatusDisplayName,
+  getPaymentMethodDisplayName,
+  calculateProfit,
+} from '@/lib/utils';
+import { Sale } from '@/types';
+import {
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  ShoppingCart,
+  DollarSign,
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
+
+export default function SalesPage() {
+  const { hasPermission, user } = useAuth();
+  const [sales, setSales] = useState<Sale[]>(initialSales);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Form state
+  const [formData, setFormData] = useState({
+    carId: '',
+    customerName: '',
+    customerPhone: '',
+    customerEmail: '',
+    customerAddress: '',
+    sellingPrice: '',
+    paymentMethod: 'cash',
+    downPayment: '',
+    saleDate: new Date().toISOString().split('T')[0],
+    notes: '',
+  });
+
+  // Available cars for sale
+  const availableCars = cars.filter((c) => c.status === 'available' || c.status === 'reserved');
+
+  // Filter sales
+  const filteredSales = useMemo(() => {
+    return sales.filter((sale) => {
+      const car = cars.find((c) => c.id === sale.carId);
+      const matchesSearch =
+        sale.saleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        sale.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        car?.specs.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        car?.specs.model.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || sale.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [sales, searchQuery, statusFilter]);
+
+  // Stats
+  const completedSales = sales.filter((s) => s.status === 'completed');
+  const totalRevenue = completedSales.reduce((sum, s) => sum + s.sellingPrice, 0);
+  const pendingSales = sales.filter((s) => s.status === 'pending');
+  const totalPending = pendingSales.reduce((sum, s) => sum + s.sellingPrice, 0);
+
+  // Calculate total profit
+  const totalProfit = completedSales.reduce((sum, sale) => {
+    const car = cars.find((c) => c.id === sale.carId);
+    if (car) {
+      return sum + (sale.sellingPrice - car.hpp);
+    }
+    return sum;
+  }, 0);
+
+  const getStatusBadgeVariant = (status: string) => {
+    const variants: Record<string, 'success' | 'warning' | 'danger'> = {
+      completed: 'success',
+      pending: 'warning',
+      cancelled: 'danger',
+    };
+    return variants[status] || 'default';
+  };
+
+  const handleViewSale = (sale: Sale) => {
+    setSelectedSale(sale);
+    setIsViewModalOpen(true);
+  };
+
+  const handleDeleteSale = (sale: Sale) => {
+    setSelectedSale(sale);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedSale) {
+      setSales(sales.filter((s) => s.id !== selectedSale.id));
+      setIsDeleteModalOpen(false);
+      setSelectedSale(null);
+    }
+  };
+
+  const handleUpdateStatus = (sale: Sale, newStatus: 'completed' | 'cancelled') => {
+    setSales(
+      sales.map((s) =>
+        s.id === sale.id ? { ...s, status: newStatus } : s
+      )
+    );
+  };
+
+  const handleSubmitSale = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newSale: Sale = {
+      id: generateId('sale'),
+      saleNumber: generateDocNumber('INV', new Date(), sales.length + 1),
+      carId: formData.carId,
+      customerName: formData.customerName,
+      customerPhone: formData.customerPhone,
+      customerEmail: formData.customerEmail,
+      customerAddress: formData.customerAddress,
+      saleDate: formData.saleDate,
+      sellingPrice: parseInt(formData.sellingPrice),
+      paymentMethod: formData.paymentMethod as Sale['paymentMethod'],
+      downPayment: formData.downPayment ? parseInt(formData.downPayment) : undefined,
+      status: 'pending',
+      soldBy: user?.name || '',
+      notes: formData.notes,
+      createdAt: new Date().toISOString(),
+    };
+    setSales([...sales, newSale]);
+    setIsAddModalOpen(false);
+    setFormData({
+      carId: '',
+      customerName: '',
+      customerPhone: '',
+      customerEmail: '',
+      customerAddress: '',
+      sellingPrice: '',
+      paymentMethod: 'cash',
+      downPayment: '',
+      saleDate: new Date().toISOString().split('T')[0],
+      notes: '',
+    });
+  };
+
+  const handleCarSelect = (carId: string) => {
+    const car = cars.find((c) => c.id === carId);
+    setFormData({
+      ...formData,
+      carId,
+      sellingPrice: car?.sellingPrice.toString() || '',
+    });
+  };
+
+  return (
+    <ProtectedRoute requiredModule="sales">
+      <DashboardLayout>
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Penjualan</h1>
+              <p className="text-gray-600">Kelola transaksi penjualan mobil</p>
+            </div>
+            {hasPermission('sales', 'create') && (
+              <Button
+                leftIcon={<Plus className="h-4 w-4" />}
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                Buat Penjualan
+              </Button>
+            )}
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="bg-white rounded-xl p-6 border border-gray-100">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <ShoppingCart className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Total Transaksi</p>
+                  <p className="text-2xl font-bold text-gray-900">{sales.length}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-6 border border-gray-100">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <DollarSign className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Total Pendapatan</p>
+                  <p className="text-lg font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-6 border border-gray-100">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-purple-100 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Total Profit</p>
+                  <p className="text-lg font-bold text-green-600">{formatCurrency(totalProfit)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-6 border border-gray-100">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-yellow-100 rounded-lg">
+                  <ShoppingCart className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-600">{pendingSales.length}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Cari nomor invoice, customer, atau mobil..."
+              className="sm:w-80"
+            />
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              options={[
+                { value: 'all', label: 'Semua Status' },
+                { value: 'completed', label: 'Selesai' },
+                { value: 'pending', label: 'Pending' },
+                { value: 'cancelled', label: 'Dibatalkan' },
+              ]}
+              className="sm:w-48"
+            />
+          </div>
+
+          {/* Sales Table */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      No. Invoice
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Tanggal
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Mobil
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Customer
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Harga Jual
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Profit
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Aksi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredSales.map((sale) => {
+                    const car = cars.find((c) => c.id === sale.carId);
+                    const profit = car ? sale.sellingPrice - car.hpp : 0;
+                    return (
+                      <tr key={sale.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="font-medium text-blue-600">{sale.saleNumber}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                          {formatDate(sale.saleDate)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {car?.specs.brand} {car?.specs.model}
+                            </p>
+                            <p className="text-sm text-gray-500">{car?.specs.plateNumber}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <p className="font-medium text-gray-900">{sale.customerName}</p>
+                            <p className="text-sm text-gray-500">{sale.customerPhone}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
+                          {formatCurrency(sale.sellingPrice)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(profit)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge variant={getStatusBadgeVariant(sale.status)}>
+                            {getStatusDisplayName(sale.status)}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewSale(sale)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {sale.status === 'pending' && hasPermission('sales', 'edit') && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleUpdateStatus(sale, 'completed')}
+                                  title="Tandai Selesai"
+                                >
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleUpdateStatus(sale, 'cancelled')}
+                                  title="Batalkan"
+                                >
+                                  <XCircle className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </>
+                            )}
+                            {hasPermission('sales', 'delete') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteSale(sale)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredSales.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Tidak ada penjualan ditemukan</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* View Modal */}
+        <Modal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          title="Detail Penjualan"
+          size="lg"
+        >
+          {selectedSale && (
+            <div className="space-y-6">
+              {(() => {
+                const car = cars.find((c) => c.id === selectedSale.carId);
+                const profit = car ? selectedSale.sellingPrice - car.hpp : 0;
+                return (
+                  <>
+                    {/* Invoice Header */}
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm text-green-600">Nomor Invoice</p>
+                          <p className="text-xl font-bold text-green-900">
+                            {selectedSale.saleNumber}
+                          </p>
+                        </div>
+                        <Badge variant={getStatusBadgeVariant(selectedSale.status)} size="md">
+                          {getStatusDisplayName(selectedSale.status)}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Car Info */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                          Informasi Mobil
+                        </h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Merk/Model</span>
+                            <span className="font-medium">
+                              {car?.specs.brand} {car?.specs.model}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Tahun</span>
+                            <span className="font-medium">{car?.specs.year}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Plat Nomor</span>
+                            <span className="font-medium">{car?.specs.plateNumber}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Customer Info */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                          Informasi Customer
+                        </h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Nama</span>
+                            <span className="font-medium">{selectedSale.customerName}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Telepon</span>
+                            <span className="font-medium">{selectedSale.customerPhone}</span>
+                          </div>
+                          {selectedSale.customerEmail && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Email</span>
+                              <span className="font-medium">{selectedSale.customerEmail}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Financial Info */}
+                    <div className="border-t pt-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        Informasi Pembayaran
+                      </h3>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Metode Pembayaran</span>
+                            <span className="font-medium">
+                              {getPaymentMethodDisplayName(selectedSale.paymentMethod)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Tanggal Penjualan</span>
+                            <span className="font-medium">{formatDate(selectedSale.saleDate)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Dijual Oleh</span>
+                            <span className="font-medium">{selectedSale.soldBy}</span>
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Harga Jual</span>
+                            <span className="font-bold text-lg">
+                              {formatCurrency(selectedSale.sellingPrice)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">HPP</span>
+                            <span className="font-medium">{formatCurrency(car?.hpp || 0)}</span>
+                          </div>
+                          <div className="flex justify-between border-t pt-2">
+                            <span className="text-gray-700 font-medium">Profit</span>
+                            <span className={`font-bold text-lg ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {formatCurrency(profit)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedSale.notes && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Catatan</p>
+                        <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+                          {selectedSale.notes}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          )}
+        </Modal>
+
+        {/* Add Sale Modal */}
+        <Modal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          title="Buat Penjualan Baru"
+          size="lg"
+        >
+          <form onSubmit={handleSubmitSale} className="space-y-6">
+            {/* Select Car */}
+            <div>
+              <Select
+                label="Pilih Mobil"
+                value={formData.carId}
+                onChange={(e) => handleCarSelect(e.target.value)}
+                options={[
+                  { value: '', label: 'Pilih mobil...' },
+                  ...availableCars.map((car) => ({
+                    value: car.id,
+                    label: `${car.specs.brand} ${car.specs.model} (${car.specs.plateNumber}) - ${formatCurrency(car.sellingPrice)}`,
+                  })),
+                ]}
+                required
+              />
+            </div>
+
+            {/* Customer Info */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informasi Customer</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Input
+                  label="Nama Customer"
+                  value={formData.customerName}
+                  onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                  required
+                />
+                <Input
+                  label="No. Telepon"
+                  value={formData.customerPhone}
+                  onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Email"
+                  type="email"
+                  value={formData.customerEmail}
+                  onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                />
+                <Input
+                  label="Alamat"
+                  value={formData.customerAddress}
+                  onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Payment Info */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informasi Pembayaran</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Input
+                  label="Tanggal Penjualan"
+                  type="date"
+                  value={formData.saleDate}
+                  onChange={(e) => setFormData({ ...formData, saleDate: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Harga Jual (Rp)"
+                  type="number"
+                  value={formData.sellingPrice}
+                  onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
+                  required
+                />
+                <Select
+                  label="Metode Pembayaran"
+                  value={formData.paymentMethod}
+                  onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                  options={[
+                    { value: 'cash', label: 'Tunai' },
+                    { value: 'transfer', label: 'Transfer Bank' },
+                    { value: 'credit', label: 'Kredit' },
+                    { value: 'leasing', label: 'Leasing' },
+                  ]}
+                />
+                {(formData.paymentMethod === 'credit' || formData.paymentMethod === 'leasing') && (
+                  <Input
+                    label="Uang Muka (DP)"
+                    type="number"
+                    value={formData.downPayment}
+                    onChange={(e) => setFormData({ ...formData, downPayment: e.target.value })}
+                  />
+                )}
+              </div>
+              <div className="mt-4">
+                <Textarea
+                  label="Catatan"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="secondary" onClick={() => setIsAddModalOpen(false)} type="button">
+                Batal
+              </Button>
+              <Button type="submit">Simpan Penjualan</Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          title="Hapus Penjualan"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Apakah Anda yakin ingin menghapus penjualan{' '}
+              <span className="font-semibold">{selectedSale?.saleNumber}</span>?
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="secondary" onClick={() => setIsDeleteModalOpen(false)}>
+                Batal
+              </Button>
+              <Button variant="danger" onClick={confirmDelete}>
+                Hapus
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      </DashboardLayout>
+    </ProtectedRoute>
+  );
+}
