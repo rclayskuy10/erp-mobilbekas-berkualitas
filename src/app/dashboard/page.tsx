@@ -20,6 +20,8 @@ import Link from 'next/link';
 import {
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -113,62 +115,126 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Charts Row */}
+          {/* Enhanced Charts Row */}
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* Monthly Sales Chart */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Penjualan Bulanan</h2>
-              <div className="h-72">
+            {/* Enhanced Monthly Sales Chart */}
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Analisis Penjualan & Pendapatan</h2>
+              <div className="h-56 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlySalesData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
+                  <BarChart data={monthlySalesData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="colorBar1" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.9}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.7}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fontSize: 10, fill: '#64748b' }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#e2e8f0' }}
+                      interval={0}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10, fill: '#64748b' }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#e2e8f0' }}
+                      tickFormatter={(value) => `${value === 0 ? '0' : (value / 1000000).toFixed(0) + 'jt'}`}
+                      width={35}
+                    />
                     <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                        fontSize: '14px'
+                      }}
                       formatter={(value, name) => {
                         if (name === 'pendapatan') return formatCurrency(Number(value));
-                        return value;
+                        return value + ' unit';
                       }}
+                      labelStyle={{ color: '#1f2937', fontWeight: 'bold' }}
                     />
-                    <Bar dataKey="penjualan" fill="#3b82f6" name="Jumlah Terjual" />
+                    <Bar 
+                      dataKey="penjualan" 
+                      fill="url(#colorBar1)" 
+                      name="Jumlah Terjual"
+                      radius={[4, 4, 0, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              {/* Additional metrics below chart */}
+              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">Rata-rata per Bulan</p>
+                  <p className="text-lg font-semibold text-blue-600">
+                    {formatCurrency(monthlySalesData.reduce((sum, d) => sum + d.pendapatan, 0) / monthlySalesData.filter(d => d.pendapatan > 0).length || 0)}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">Unit Terlaris</p>
+                  <p className="text-lg font-semibold text-green-600">
+                    {Math.max(...monthlySalesData.map(d => d.penjualan))} unit
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Status Pie Chart */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Status Inventory</h2>
-              <div className="h-72">
+            {/* Enhanced Status Pie Chart */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Distribusi Inventory</h2>
+              <div className="h-56 sm:h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={statusData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
+                      innerRadius={40}
+                      outerRadius={75}
+                      paddingAngle={2}
                       dataKey="value"
+                      label={({value, percent}) => `${value}`}
+                      labelLine={false}
                     >
                       {statusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.color}
+                          stroke={entry.color}
+                          strokeWidth={2}
+                        />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        fontSize: '14px'
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex flex-wrap justify-center gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
                 {statusData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2">
+                  <div key={item.name} className="flex items-center gap-2 p-2 rounded-lg bg-gray-50">
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className="text-sm text-gray-600">
-                      {item.name} ({item.value})
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600 truncate">{item.name}</span>
+                        <span className="text-sm font-semibold text-gray-900 ml-1">{item.value}</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

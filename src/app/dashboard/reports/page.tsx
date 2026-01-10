@@ -24,6 +24,8 @@ import {
 import {
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -357,41 +359,89 @@ export default function ReportsPage() {
 
           {/* Charts Row */}
           <div className="grid lg:grid-cols-2 gap-6">
-            {/* Monthly Profit Chart */}
+            {/* Enhanced Monthly Profit Chart */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Tren Profit Bulanan
+                Analisis Profit & Tren Bulanan
               </h2>
-              <div className="h-72">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
+                  <AreaChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                    <defs>
+                      <linearGradient id="grossProfitGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05}/>
+                      </linearGradient>
+                      <linearGradient id="netProfitGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fontSize: 12, fill: '#64748b' }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#e2e8f0' }}
+                    />
                     <YAxis
+                      tick={{ fontSize: 12, fill: '#64748b' }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#e2e8f0' }}
                       tickFormatter={(value) =>
                         `${(value / 1000000).toFixed(0)}jt`
                       }
                     />
                     <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        fontSize: '14px'
+                      }}
                       formatter={(value) => formatCurrency(Number(value))}
+                      labelStyle={{ color: '#1f2937', fontWeight: 'bold' }}
                     />
-                    <Legend />
-                    <Line
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="circle"
+                    />
+                    <Area
                       type="monotone"
                       dataKey="grossProfit"
                       stroke="#22c55e"
+                      strokeWidth={3}
+                      fill="url(#grossProfitGradient)"
                       name="Gross Profit"
-                      strokeWidth={2}
+                      dot={{ fill: '#22c55e', r: 4 }}
+                      activeDot={{ r: 6, stroke: '#22c55e', strokeWidth: 2 }}
                     />
-                    <Line
+                    <Area
                       type="monotone"
                       dataKey="netProfit"
                       stroke="#3b82f6"
+                      strokeWidth={3}
+                      fill="url(#netProfitGradient)"
                       name="Net Profit"
-                      strokeWidth={2}
+                      dot={{ fill: '#3b82f6', r: 4 }}
+                      activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
                     />
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
+              </div>
+              {/* Trend indicators */}
+              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">Gross Profit YTD</p>
+                  <p className="text-lg font-semibold text-green-600">{formatCurrency(grossProfit)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">Net Profit YTD</p>
+                  <p className={`text-lg font-semibold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                    {formatCurrency(netProfit)}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -438,26 +488,114 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* Revenue vs Cost Chart */}
+          {/* Enhanced Revenue vs Cost Chart */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Pendapatan vs Biaya Bulanan
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">
+              Analisis Pendapatan vs Biaya Bulanan
             </h2>
-            <div className="h-72">
+            <div className="h-64 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(0)}jt`}
+                <BarChart data={monthlyData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="pendapatanGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.6}/>
+                    </linearGradient>
+                    <linearGradient id="hppGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0.6}/>
+                    </linearGradient>
+                    <linearGradient id="biayaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0.6}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 10, fill: '#64748b' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    interval={0}
                   />
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Legend />
-                  <Bar dataKey="pendapatan" fill="#3b82f6" name="Pendapatan" />
-                  <Bar dataKey="hpp" fill="#ef4444" name="HPP" />
-                  <Bar dataKey="biaya" fill="#f97316" name="Biaya Operasional" />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: '#64748b' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    tickFormatter={(value) => `${(value / 1000000).toFixed(0)}jt`}
+                    width={40}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                      fontSize: '12px'
+                    }}
+                    formatter={(value) => formatCurrency(Number(value))} 
+                    labelStyle={{ color: '#1f2937', fontWeight: 'bold' }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '10px' }}
+                    iconType="rect"
+                    layout="horizontal"
+                    align="center"
+                    formatter={(value) => <span style={{ color: '#374151', fontSize: '12px', marginRight: '16px' }}>{value}</span>}
+                  />
+                  <Bar 
+                    dataKey="biaya" 
+                    fill="url(#biayaGrad)" 
+                    name="Biaya Operasional"
+                    radius={[4, 4, 0, 0]}
+                    barSize={40}
+                  />
+                  <Bar 
+                    dataKey="hpp" 
+                    fill="url(#hppGrad)" 
+                    name="HPP"
+                    radius={[4, 4, 0, 0]}
+                    barSize={40}
+                  />
+                  <Bar 
+                    dataKey="pendapatan" 
+                    fill="url(#pendapatanGrad)" 
+                    name="Pendapatan"
+                    radius={[4, 4, 0, 0]}
+                    barSize={40}
+                  />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+            {/* Financial metrics summary */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100">
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded bg-blue-500"></div>
+                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Rata-rata Pendapatan</p>
+                </div>
+                <p className="text-sm sm:text-lg font-bold text-blue-600 break-all">
+                  {formatCurrency(monthlyData.reduce((sum, d) => sum + d.pendapatan, 0) / monthlyData.filter(d => d.pendapatan > 0).length || 0)}
+                </p>
+              </div>
+              <div className="text-center p-3 bg-red-50 rounded-lg">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded bg-red-500"></div>
+                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Rata-rata HPP</p>
+                </div>
+                <p className="text-sm sm:text-lg font-bold text-red-600 break-all">
+                  {formatCurrency(monthlyData.reduce((sum, d) => sum + d.hpp, 0) / monthlyData.filter(d => d.hpp > 0).length || 0)}
+                </p>
+              </div>
+              <div className="text-center p-3 bg-orange-50 rounded-lg">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded bg-orange-500"></div>
+                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Rata-rata Biaya</p>
+                </div>
+                <p className="text-sm sm:text-lg font-bold text-orange-600 break-all">
+                  {formatCurrency(monthlyData.reduce((sum, d) => sum + d.biaya, 0) / monthlyData.length)}
+                </p>
+              </div>
             </div>
           </div>
 
