@@ -44,6 +44,28 @@ export default function InventoryPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  // Form state for adding new car
+  const [carForm, setCarForm] = useState({
+    brand: '',
+    model: '',
+    year: new Date().getFullYear().toString(),
+    color: '',
+    plateNumber: '',
+    mileage: '',
+    engineCapacity: '',
+    fuelType: '',
+    transmission: '',
+    seats: '5',
+    doors: '4',
+    vin: '',
+    purchasePrice: '',
+    sellingPrice: '',
+    condition: '',
+    description: '',
+    photos: [] as string[],
+  });
 
   // Filter cars
   const filteredCars = useMemo(() => {
@@ -97,6 +119,66 @@ export default function InventoryPage() {
     }
   };
 
+  const handleAddCar = () => {
+    setIsAddModalOpen(true);
+  };
+
+  const handleSubmitCar = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const newCar: Car = {
+      id: `car-${Date.now()}`,
+      specs: {
+        brand: carForm.brand,
+        model: carForm.model,
+        year: parseInt(carForm.year),
+        color: carForm.color,
+        plateNumber: carForm.plateNumber,
+        mileage: parseInt(carForm.mileage),
+        engineCapacity: carForm.engineCapacity,
+        fuelType: carForm.fuelType as 'petrol' | 'diesel' | 'hybrid' | 'electric',
+        transmission: carForm.transmission as 'manual' | 'automatic' | 'cvt',
+        seats: parseInt(carForm.seats),
+        doors: parseInt(carForm.doors),
+        vin: carForm.vin,
+      },
+      purchasePrice: parseInt(carForm.purchasePrice),
+      sellingPrice: parseInt(carForm.sellingPrice),
+      condition: carForm.condition as 'excellent' | 'good' | 'fair',
+      status: 'available',
+      photos: carForm.photos,
+      description: carForm.description,
+      maintenanceCosts: [],
+      hpp: parseInt(carForm.purchasePrice), // Initial HPP = purchase price
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setCars([...cars, newCar]);
+    setIsAddModalOpen(false);
+    
+    // Reset form
+    setCarForm({
+      brand: '',
+      model: '',
+      year: new Date().getFullYear().toString(),
+      color: '',
+      plateNumber: '',
+      mileage: '',
+      engineCapacity: '',
+      fuelType: '',
+      transmission: '',
+      seats: '5',
+      doors: '4',
+      vin: '',
+      purchasePrice: '',
+      sellingPrice: '',
+      condition: '',
+      description: '',
+      photos: [],
+    });
+  };
+
   return (
     <ProtectedRoute requiredModule="inventory">
       <DashboardLayout>
@@ -108,7 +190,7 @@ export default function InventoryPage() {
               <p className="text-gray-600">Kelola stok mobil bekas</p>
             </div>
             {hasPermission('inventory', 'create') && (
-              <Button leftIcon={<Plus className="h-4 w-4" />}>
+              <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleAddCar}>
                 Tambah Mobil
               </Button>
             )}
@@ -412,6 +494,214 @@ export default function InventoryPage() {
               )}
             </div>
           )}
+        </Modal>
+
+        {/* Add Car Modal */}
+        <Modal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          title="Tambah Mobil Baru"
+          size="xl"
+        >
+          <form onSubmit={handleSubmitCar} className="space-y-6">
+            {/* Car Specifications */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Spesifikasi Mobil</h3>
+                <div className="space-y-4">
+                  <Input
+                    label="Merk"
+                    value={carForm.brand}
+                    onChange={(e) => setCarForm({ ...carForm, brand: e.target.value })}
+                    placeholder="Toyota"
+                    required
+                  />
+                  <Input
+                    label="Model"
+                    value={carForm.model}
+                    onChange={(e) => setCarForm({ ...carForm, model: e.target.value })}
+                    placeholder="Avanza"
+                    required
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Tahun"
+                      type="number"
+                      value={carForm.year}
+                      onChange={(e) => setCarForm({ ...carForm, year: e.target.value })}
+                      min="1990"
+                      max={new Date().getFullYear()}
+                      required
+                    />
+                    <Input
+                      label="Warna"
+                      value={carForm.color}
+                      onChange={(e) => setCarForm({ ...carForm, color: e.target.value })}
+                      placeholder="Putih"
+                      required
+                    />
+                  </div>
+                  <Input
+                    label="Plat Nomor"
+                    value={carForm.plateNumber}
+                    onChange={(e) => setCarForm({ ...carForm, plateNumber: e.target.value })}
+                    placeholder="B 1234 ABC"
+                    required
+                  />
+                  <Input
+                    label="Kilometer"
+                    type="number"
+                    value={carForm.mileage}
+                    onChange={(e) => setCarForm({ ...carForm, mileage: e.target.value })}
+                    placeholder="50000"
+                    required
+                  />
+                  <Input
+                    label="Kapasitas Mesin"
+                    value={carForm.engineCapacity}
+                    onChange={(e) => setCarForm({ ...carForm, engineCapacity: e.target.value })}
+                    placeholder="1.3L"
+                    required
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Jumlah Kursi"
+                      type="number"
+                      value={carForm.seats}
+                      onChange={(e) => setCarForm({ ...carForm, seats: e.target.value })}
+                      min="2"
+                      max="8"
+                      required
+                    />
+                    <Input
+                      label="Jumlah Pintu"
+                      type="number"
+                      value={carForm.doors}
+                      onChange={(e) => setCarForm({ ...carForm, doors: e.target.value })}
+                      min="2"
+                      max="5"
+                      required
+                    />
+                  </div>
+                  <Select
+                    label="Jenis BBM"
+                    value={carForm.fuelType}
+                    onChange={(e) => setCarForm({ ...carForm, fuelType: e.target.value })}
+                    options={[
+                      { value: '', label: 'Pilih jenis BBM...' },
+                      { value: 'petrol', label: 'Bensin' },
+                      { value: 'diesel', label: 'Diesel' },
+                      { value: 'hybrid', label: 'Hybrid' },
+                      { value: 'electric', label: 'Listrik' },
+                    ]}
+                    required
+                  />
+                  <Select
+                    label="Transmisi"
+                    value={carForm.transmission}
+                    onChange={(e) => setCarForm({ ...carForm, transmission: e.target.value })}
+                    options={[
+                      { value: '', label: 'Pilih transmisi...' },
+                      { value: 'manual', label: 'Manual' },
+                      { value: 'automatic', label: 'Otomatis' },
+                      { value: 'cvt', label: 'CVT' },
+                    ]}
+                    required
+                  />
+                  <Input
+                    label="VIN Number"
+                    value={carForm.vin}
+                    onChange={(e) => setCarForm({ ...carForm, vin: e.target.value })}
+                    placeholder="WBAVD53568GV45789"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Harga & Kondisi</h3>
+                <div className="space-y-4">
+                  <Input
+                    label="Harga Beli (Rp)"
+                    type="number"
+                    value={carForm.purchasePrice}
+                    onChange={(e) => setCarForm({ ...carForm, purchasePrice: e.target.value })}
+                    placeholder="150000000"
+                    required
+                  />
+                  <Input
+                    label="Harga Jual (Rp)"
+                    type="number"
+                    value={carForm.sellingPrice}
+                    onChange={(e) => setCarForm({ ...carForm, sellingPrice: e.target.value })}
+                    placeholder="165000000"
+                    required
+                  />
+                  <Select
+                    label="Kondisi"
+                    value={carForm.condition}
+                    onChange={(e) => setCarForm({ ...carForm, condition: e.target.value })}
+                    options={[
+                      { value: '', label: 'Pilih kondisi...' },
+                      { value: 'excellent', label: 'Sangat Baik' },
+                      { value: 'good', label: 'Baik' },
+                      { value: 'fair', label: 'Cukup' },
+                    ]}
+                    required
+                  />
+                  <Textarea
+                    label="Deskripsi"
+                    value={carForm.description}
+                    onChange={(e) => setCarForm({ ...carForm, description: e.target.value })}
+                    placeholder="Kondisi mobil, riwayat perawatan, fitur unggulan..."
+                    rows={4}
+                  />
+                  
+                  {/* URL Photo inputs */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      URL Foto Mobil (maksimal 5)
+                    </label>
+                    {[0, 1, 2, 3, 4].map((index) => (
+                      <Input
+                        key={index}
+                        placeholder={`URL foto ${index + 1} (opsional)`}
+                        value={carForm.photos[index] || ''}
+                        onChange={(e) => {
+                          const newPhotos = [...carForm.photos];
+                          if (e.target.value) {
+                            newPhotos[index] = e.target.value;
+                          } else {
+                            newPhotos.splice(index, 1);
+                          }
+                          setCarForm({ ...carForm, photos: newPhotos.filter(Boolean) });
+                        }}
+                      />
+                    ))}
+                  </div>
+                  
+                  {/* Profit calculation preview */}
+                  {carForm.purchasePrice && carForm.sellingPrice && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-600">Estimasi Profit:</p>
+                      <p className="text-lg font-bold text-green-600">
+                        {formatCurrency(parseInt(carForm.sellingPrice) - parseInt(carForm.purchasePrice))}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="secondary" onClick={() => setIsAddModalOpen(false)} type="button">
+                Batal
+              </Button>
+              <Button type="submit">
+                Simpan Mobil
+              </Button>
+            </div>
+          </form>
         </Modal>
 
         {/* Delete Confirmation Modal */}
