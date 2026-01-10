@@ -16,6 +16,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  /* Prevent zoom on mobile */
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Custom scrollbar */
@@ -46,4 +51,37 @@ body {
 *:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
+}
+
+/* Prevent zoom and improve mobile touch experience */
+input[type="text"], 
+input[type="number"], 
+input[type="email"], 
+input[type="password"], 
+input[type="tel"], 
+select, 
+textarea {
+  /* Prevent zoom on focus for iOS */
+  font-size: 16px;
+}
+
+/* Disable text selection on touch devices except for inputs */
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+input, textarea, [contenteditable] {
+  -webkit-user-select: auto;
+  -moz-user-select: auto;
+  -ms-user-select: auto;
+  user-select: auto;
+}
+
+/* Prevent pinch zoom on touch devices */
+html {
+  -ms-touch-action: manipulation;
+  touch-action: manipulation;
 }
