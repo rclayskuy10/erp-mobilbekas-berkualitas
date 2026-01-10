@@ -124,7 +124,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-white/10 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
-          <p>&copy; 2024 MobilERP. Sistem Internal - Tidak untuk publik.</p>
+          <p>&copy; {new Date().getFullYear()} MobilERP. Sistem Internal - Tidak untuk publik.</p>
         </div>
       </footer>
     </div>

@@ -172,7 +172,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page content */}
-        <main className="p-4 md:p-6 lg:p-8">{children}</main>
+        <main className="p-4 md:p-6 lg:p-8 pb-16">{children}</main>
+
+        {/* Footer */}
+        <footer className="border-t border-gray-200 bg-white px-4 py-4">
+          <div className="text-center text-sm text-gray-500">
+            <p>&copy; {new Date().getFullYear()} MobilERP. Sistem Internal - Tidak untuk publik.</p>
+          </div>
+        </footer>
       </div>
     </div>
   );
