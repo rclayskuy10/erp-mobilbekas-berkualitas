@@ -52,9 +52,23 @@ export default function Button({
         <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
       ) : (
         <>
-          {leftIcon}
+          {leftIcon && (
+            <span 
+              className="flex-shrink-0 inline-flex items-center justify-center" 
+              style={{ minWidth: '16px', minHeight: '16px' }}
+            >
+              {leftIcon}
+            </span>
+          )}
           {children}
-          {rightIcon}
+          {rightIcon && (
+            <span 
+              className="flex-shrink-0 inline-flex items-center justify-center" 
+              style={{ minWidth: '16px', minHeight: '16px' }}
+            >
+              {rightIcon}
+            </span>
+          )}
         </>
       )}
     </button>

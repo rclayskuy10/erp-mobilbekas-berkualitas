@@ -250,7 +250,7 @@ export default function ReportsPage() {
                           onClick={handleExportFullExcel}
                           className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
                         >
-                          <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                          <FileSpreadsheet className="flex-shrink-0 w-4 h-4 text-green-600" style={{ minWidth: '16px', minHeight: '16px' }} />
                           <div className="text-left">
                             <p className="font-medium">Export Excel (Lengkap)</p>
                             <p className="text-xs text-gray-500">Semua data dalam 1 file</p>
@@ -260,7 +260,7 @@ export default function ReportsPage() {
                           onClick={handleExportCSV}
                           className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
                         >
-                          <FileText className="h-4 w-4 text-blue-600" />
+                          <FileText className="flex-shrink-0 w-4 h-4 text-blue-600" style={{ minWidth: '16px', minHeight: '16px' }} />
                           <div className="text-left">
                             <p className="font-medium">Profit per Mobil (CSV)</p>
                             <p className="text-xs text-gray-500">Data profit penjualan</p>
@@ -270,7 +270,7 @@ export default function ReportsPage() {
                           onClick={handleExportExpensesCSV}
                           className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
                         >
-                          <FileText className="h-4 w-4 text-red-600" />
+                          <FileText className="flex-shrink-0 w-4 h-4 text-red-600" style={{ minWidth: '16px', minHeight: '16px' }} />
                           <div className="text-left">
                             <p className="font-medium">Biaya Operasional (CSV)</p>
                             <p className="text-xs text-gray-500">Data pengeluaran</p>
