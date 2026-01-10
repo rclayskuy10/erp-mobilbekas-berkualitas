@@ -32,6 +32,7 @@ import {
   TrendingUp,
   CheckCircle,
   XCircle,
+  Printer,
 } from 'lucide-react';
 
 export default function SalesPage() {
@@ -169,6 +170,169 @@ export default function SalesPage() {
       carId,
       sellingPrice: car?.sellingPrice.toString() || '',
     });
+  };
+
+  // Print Invoice Function
+  const handlePrintInvoice = (sale: Sale) => {
+    const car = cars.find((c) => c.id === sale.carId);
+    const profit = car ? sale.sellingPrice - car.hpp : 0;
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const invoiceHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice ${sale.saleNumber}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background: #f5f5f5; }
+          .invoice-container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #3b82f6; }
+          .company-info h1 { color: #3b82f6; font-size: 28px; margin-bottom: 5px; }
+          .company-info p { color: #666; font-size: 14px; }
+          .invoice-details { text-align: right; }
+          .invoice-details h2 { color: #333; font-size: 24px; margin-bottom: 10px; }
+          .invoice-details p { color: #666; margin: 3px 0; }
+          .status { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+          .status-completed { background: #dcfce7; color: #166534; }
+          .status-pending { background: #fef3c7; color: #92400e; }
+          .status-cancelled { background: #fee2e2; color: #dc2626; }
+          .section { margin-bottom: 30px; }
+          .section-title { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+          .info-box { background: #f9fafb; padding: 20px; border-radius: 8px; }
+          .info-box h3 { font-size: 14px; color: #6b7280; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+          .info-row { display: flex; justify-content: space-between; margin: 8px 0; }
+          .info-row .label { color: #6b7280; }
+          .info-row .value { font-weight: 500; color: #111; }
+          .items-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          .items-table th { background: #f3f4f6; padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #6b7280; }
+          .items-table td { padding: 15px 12px; border-bottom: 1px solid #e5e7eb; }
+          .totals { margin-top: 30px; display: flex; justify-content: flex-end; }
+          .totals-box { width: 300px; background: #f9fafb; padding: 20px; border-radius: 8px; }
+          .total-row { display: flex; justify-content: space-between; margin: 8px 0; }
+          .total-row.grand { border-top: 2px solid #e5e7eb; padding-top: 15px; margin-top: 15px; font-size: 18px; font-weight: 700; }
+          .total-row.grand .value { color: #3b82f6; }
+          .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #9ca3af; font-size: 12px; }
+          .notes { background: #fffbeb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 20px; }
+          .notes p { color: #92400e; font-size: 14px; }
+          @media print {
+            body { padding: 0; background: white; }
+            .invoice-container { box-shadow: none; padding: 20px; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-container">
+          <div class="header">
+            <div class="company-info">
+              <h1>🚗 MobilERP</h1>
+              <p>Showroom Mobil Bekas Berkualitas</p>
+              <p>Jl. Otomotif No. 123, Jakarta</p>
+              <p>Telp: (021) 1234-5678</p>
+            </div>
+            <div class="invoice-details">
+              <h2>INVOICE</h2>
+              <p><strong>${sale.saleNumber}</strong></p>
+              <p>Tanggal: ${formatDate(sale.saleDate)}</p>
+              <p style="margin-top: 10px;">
+                <span class="status status-${sale.status}">${getStatusDisplayName(sale.status)}</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-box">
+              <h3>Informasi Customer</h3>
+              <div class="info-row"><span class="label">Nama</span><span class="value">${sale.customerName}</span></div>
+              <div class="info-row"><span class="label">Telepon</span><span class="value">${sale.customerPhone}</span></div>
+              ${sale.customerEmail ? `<div class="info-row"><span class="label">Email</span><span class="value">${sale.customerEmail}</span></div>` : ''}
+              ${sale.customerAddress ? `<div class="info-row"><span class="label">Alamat</span><span class="value">${sale.customerAddress}</span></div>` : ''}
+            </div>
+            <div class="info-box">
+              <h3>Informasi Pembayaran</h3>
+              <div class="info-row"><span class="label">Metode</span><span class="value">${getPaymentMethodDisplayName(sale.paymentMethod)}</span></div>
+              ${sale.downPayment ? `<div class="info-row"><span class="label">Uang Muka (DP)</span><span class="value">${formatCurrency(sale.downPayment)}</span></div>` : ''}
+              <div class="info-row"><span class="label">Sales</span><span class="value">${sale.soldBy}</span></div>
+            </div>
+          </div>
+
+          <div class="section" style="margin-top: 30px;">
+            <div class="section-title">Detail Kendaraan</div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Deskripsi</th>
+                  <th>Tahun</th>
+                  <th>Plat Nomor</th>
+                  <th style="text-align: right;">Harga</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <strong>${car?.specs.brand} ${car?.specs.model}</strong><br>
+                    <span style="color: #6b7280; font-size: 13px;">${car?.specs.transmission} • ${car?.specs.fuelType} • ${car?.specs.color}</span>
+                  </td>
+                  <td>${car?.specs.year}</td>
+                  <td>${car?.specs.plateNumber}</td>
+                  <td style="text-align: right; font-weight: 600;">${formatCurrency(sale.sellingPrice)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="totals">
+            <div class="totals-box">
+              <div class="total-row">
+                <span>Subtotal</span>
+                <span>${formatCurrency(sale.sellingPrice)}</span>
+              </div>
+              ${sale.downPayment ? `
+              <div class="total-row">
+                <span>Uang Muka (DP)</span>
+                <span>- ${formatCurrency(sale.downPayment)}</span>
+              </div>
+              <div class="total-row grand">
+                <span>Sisa Pembayaran</span>
+                <span class="value">${formatCurrency(sale.sellingPrice - sale.downPayment)}</span>
+              </div>
+              ` : `
+              <div class="total-row grand">
+                <span>Total</span>
+                <span class="value">${formatCurrency(sale.sellingPrice)}</span>
+              </div>
+              `}
+            </div>
+          </div>
+
+          ${sale.notes ? `
+          <div class="notes">
+            <strong>Catatan:</strong>
+            <p>${sale.notes}</p>
+          </div>
+          ` : ''}
+
+          <div class="footer">
+            <p>Terima kasih atas kepercayaan Anda!</p>
+            <p style="margin-top: 5px;">Invoice ini dicetak pada ${new Date().toLocaleString('id-ID')}</p>
+            <p style="margin-top: 10px;">MobilERP - Sistem Manajemen Showroom Mobil</p>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(invoiceHTML);
+    printWindow.document.close();
   };
 
   return (
@@ -337,8 +501,17 @@ export default function SalesPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleViewSale(sale)}
+                              title="Lihat Detail"
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePrintInvoice(sale)}
+                              title="Cetak Invoice"
+                            >
+                              <Printer className="h-4 w-4 text-blue-500" />
                             </Button>
                             {sale.status === 'pending' && hasPermission('sales', 'edit') && (
                               <>
@@ -514,6 +687,22 @@ export default function SalesPage() {
                         </p>
                       </div>
                     )}
+
+                    {/* Print Button */}
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setIsViewModalOpen(false)}
+                      >
+                        Tutup
+                      </Button>
+                      <Button
+                        leftIcon={<Printer className="h-4 w-4" />}
+                        onClick={() => handlePrintInvoice(selectedSale)}
+                      >
+                        Cetak Invoice
+                      </Button>
+                    </div>
                   </>
                 );
               })()}

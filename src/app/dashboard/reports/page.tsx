@@ -10,7 +10,7 @@ import Select from '@/components/ui/Select';
 import { useAuth } from '@/contexts/AuthContext';
 import { cars, sales, expenses as initialExpenses } from '@/data/dummy';
 import { formatCurrency, getMonthName, exportToCSV, exportToExcel } from '@/lib/utils';
-import { Expense } from '@/types';
+import { Expense, Sale } from '@/types';
 import {
   TrendingUp,
   TrendingDown,
@@ -19,7 +19,9 @@ import {
   Download,
   Plus,
   Calendar,
-  FileSpreadsheet,
+  Sheet,
+  BarChart3,
+  Wallet,
 } from 'lucide-react';
 import {
   BarChart,
@@ -246,36 +248,65 @@ export default function ReportsPage() {
                       className="fixed inset-0 z-40"
                       onClick={() => setIsExportMenuOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-56 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                      <div className="py-1">
+                    <div className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 top-auto sm:top-full mt-2 sm:w-72 rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="p-2">
                         <button
                           onClick={handleExportFullExcel}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                          className="flex w-full items-center rounded-lg px-3 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
-                          <FileSpreadsheet className="flex-shrink-0 w-4 h-4 text-green-600" style={{ minWidth: '16px', minHeight: '16px' }} />
-                          <div className="text-left">
-                            <p className="font-medium">Export Excel (Lengkap)</p>
-                            <p className="text-xs text-gray-500">Semua data dalam 1 file</p>
+                          <div className="w-10 h-10 rounded-lg bg-[#217346] flex items-center justify-center flex-shrink-0">
+                            <svg viewBox="0 0 32 32" className="w-6 h-6">
+                              <path fill="#fff" d="M19.5 6H12v20h7.5c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/>
+                              <path fill="#185C37" d="M19.5 6H12v20h7.5c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" opacity=".2"/>
+                              <path fill="#fff" d="M2.5 8C2.5 6.9 3.4 6 4.5 6H12v20H4.5c-1.1 0-2-.9-2-2V8z"/>
+                              <path fill="#217346" d="M2.5 8C2.5 6.9 3.4 6 4.5 6H12v20H4.5c-1.1 0-2-.9-2-2V8z" opacity=".6"/>
+                              <path fill="#fff" d="M12 6h9.5c1.1 0 2 .9 2 2v16c0 1.1-.9 2-2 2H12V6z"/>
+                              <text x="14" y="19" fill="#217346" fontSize="8" fontWeight="bold" fontFamily="Arial">X</text>
+                            </svg>
+                          </div>
+                          <div className="ml-3 text-left flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">Export Excel (Lengkap)</p>
+                            <p className="text-xs text-gray-500 truncate">Semua data dalam 1 file</p>
                           </div>
                         </button>
                         <button
                           onClick={handleExportCSV}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                          className="flex w-full items-center rounded-lg px-3 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
-                          <FileText className="flex-shrink-0 w-4 h-4 text-blue-600" style={{ minWidth: '16px', minHeight: '16px' }} />
-                          <div className="text-left">
-                            <p className="font-medium">Profit per Mobil (CSV)</p>
-                            <p className="text-xs text-gray-500">Data profit penjualan</p>
+                          <div className="w-10 h-10 rounded-lg bg-[#0078D4] flex items-center justify-center flex-shrink-0">
+                            <svg viewBox="0 0 32 32" className="w-6 h-6">
+                              <rect x="4" y="6" width="24" height="20" rx="2" fill="#fff"/>
+                              <rect x="6" y="10" width="8" height="3" fill="#0078D4"/>
+                              <rect x="6" y="15" width="8" height="3" fill="#0078D4"/>
+                              <rect x="6" y="20" width="8" height="3" fill="#0078D4"/>
+                              <rect x="16" y="10" width="10" height="3" fill="#50E6FF"/>
+                              <rect x="16" y="15" width="10" height="3" fill="#50E6FF"/>
+                              <rect x="16" y="20" width="10" height="3" fill="#50E6FF"/>
+                            </svg>
+                          </div>
+                          <div className="ml-3 text-left flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">Profit per Mobil (CSV)</p>
+                            <p className="text-xs text-gray-500 truncate">Data profit penjualan</p>
                           </div>
                         </button>
                         <button
                           onClick={handleExportExpensesCSV}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                          className="flex w-full items-center rounded-lg px-3 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
-                          <FileText className="flex-shrink-0 w-4 h-4 text-red-600" style={{ minWidth: '16px', minHeight: '16px' }} />
-                          <div className="text-left">
-                            <p className="font-medium">Biaya Operasional (CSV)</p>
-                            <p className="text-xs text-gray-500">Data pengeluaran</p>
+                          <div className="w-10 h-10 rounded-lg bg-[#E74C3C] flex items-center justify-center flex-shrink-0">
+                            <svg viewBox="0 0 32 32" className="w-6 h-6">
+                              <rect x="4" y="6" width="24" height="20" rx="2" fill="#fff"/>
+                              <rect x="6" y="10" width="8" height="3" fill="#E74C3C"/>
+                              <rect x="6" y="15" width="8" height="3" fill="#E74C3C"/>
+                              <rect x="6" y="20" width="8" height="3" fill="#E74C3C"/>
+                              <rect x="16" y="10" width="10" height="3" fill="#FADBD8"/>
+                              <rect x="16" y="15" width="10" height="3" fill="#FADBD8"/>
+                              <rect x="16" y="20" width="10" height="3" fill="#FADBD8"/>
+                            </svg>
+                          </div>
+                          <div className="ml-3 text-left flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">Biaya Operasional (CSV)</p>
+                            <p className="text-xs text-gray-500 truncate">Data pengeluaran</p>
                           </div>
                         </button>
                       </div>
