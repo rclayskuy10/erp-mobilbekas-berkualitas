@@ -213,7 +213,7 @@ export default function ReportsPage() {
   return (
     <ProtectedRoute requiredModule="reports">
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-hidden">
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -464,133 +464,227 @@ export default function ReportsPage() {
           {/* Detailed Tables */}
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Profit per Car */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                 Profit per Mobil Terjual
               </h2>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">
-                        Mobil
-                      </th>
-                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-600">
-                        HPP
-                      </th>
-                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-600">
-                        Harga Jual
-                      </th>
-                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-600">
-                        Profit
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {soldCars.map((car) => {
-                      const sale = completedSales.find((s) => s.carId === car.id);
-                      const profit = sale ? sale.sellingPrice - car.hpp : 0;
-                      return (
-                        <tr key={car.id} className="border-b border-gray-50">
-                          <td className="py-3 px-2">
-                            <p className="font-medium text-gray-900">
-                              {car.specs.brand} {car.specs.model}
-                            </p>
-                            <p className="text-sm text-gray-500">{car.specs.plateNumber}</p>
-                          </td>
-                          <td className="py-3 px-2 text-right text-gray-600">
-                            {formatCurrency(car.hpp)}
-                          </td>
-                          <td className="py-3 px-2 text-right text-gray-600">
-                            {formatCurrency(sale?.sellingPrice || 0)}
-                          </td>
-                          <td
-                            className={`py-3 px-2 text-right font-semibold ${
-                              profit >= 0 ? 'text-green-600' : 'text-red-600'
-                            }`}
-                          >
+              
+              {/* Mobile Card Layout */}
+              <div className="block sm:hidden space-y-3">
+                {soldCars.map((car) => {
+                  const sale = completedSales.find((s) => s.carId === car.id);
+                  const profit = sale ? sale.sellingPrice - car.hpp : 0;
+                  return (
+                    <div key={car.id} className="bg-gray-50 rounded-lg p-3 space-y-2">
+                      <div className="font-medium text-gray-900 text-sm">
+                        {car.specs.brand} {car.specs.model}
+                      </div>
+                      <div className="text-xs text-gray-500">{car.specs.plateNumber}</div>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-500">HPP:</span>
+                          <div className="font-medium">{formatCurrency(car.hpp)}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Jual:</span>
+                          <div className="font-medium">{formatCurrency(sale?.sellingPrice || 0)}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-500">Profit:</span>
+                          <div className={`font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                             {formatCurrency(profit)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  <tfoot>
-                    <tr className="bg-gray-50">
-                      <td className="py-3 px-2 font-semibold text-gray-900">Total</td>
-                      <td className="py-3 px-2 text-right font-semibold text-gray-900">
-                        {formatCurrency(totalHPP)}
-                      </td>
-                      <td className="py-3 px-2 text-right font-semibold text-gray-900">
-                        {formatCurrency(totalRevenue)}
-                      </td>
-                      <td
-                        className={`py-3 px-2 text-right font-bold ${
-                          grossProfit >= 0 ? 'text-green-600' : 'text-red-600'
-                        }`}
-                      >
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <div className="grid grid-cols-3 gap-2 text-xs font-semibold">
+                    <div>
+                      <span className="text-gray-700">Total HPP:</span>
+                      <div className="text-gray-900">{formatCurrency(totalHPP)}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-700">Total Jual:</span>
+                      <div className="text-gray-900">{formatCurrency(totalRevenue)}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-700">Total Profit:</span>
+                      <div className={`${grossProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {formatCurrency(grossProfit)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Table Layout */}
+              <div className="hidden sm:block">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">
+                          Mobil
+                        </th>
+                        <th className="text-right py-3 px-2 text-sm font-semibold text-gray-600">
+                          HPP
+                        </th>
+                        <th className="text-right py-3 px-2 text-sm font-semibold text-gray-600">
+                          Harga Jual
+                        </th>
+                        <th className="text-right py-3 px-2 text-sm font-semibold text-gray-600">
+                          Profit
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {soldCars.map((car) => {
+                        const sale = completedSales.find((s) => s.carId === car.id);
+                        const profit = sale ? sale.sellingPrice - car.hpp : 0;
+                        return (
+                          <tr key={car.id} className="border-b border-gray-50">
+                            <td className="py-3 px-2">
+                              <p className="font-medium text-gray-900">
+                                {car.specs.brand} {car.specs.model}
+                              </p>
+                              <p className="text-sm text-gray-500">{car.specs.plateNumber}</p>
+                            </td>
+                            <td className="py-3 px-2 text-right text-gray-600">
+                              {formatCurrency(car.hpp)}
+                            </td>
+                            <td className="py-3 px-2 text-right text-gray-600">
+                              {formatCurrency(sale?.sellingPrice || 0)}
+                            </td>
+                            <td
+                              className={`py-3 px-2 text-right font-semibold ${
+                                profit >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}
+                            >
+                              {formatCurrency(profit)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-gray-50">
+                        <td className="py-3 px-2 font-semibold text-gray-900">Total</td>
+                        <td className="py-3 px-2 text-right font-semibold text-gray-900">
+                          {formatCurrency(totalHPP)}
+                        </td>
+                        <td className="py-3 px-2 text-right font-semibold text-gray-900">
+                          {formatCurrency(totalRevenue)}
+                        </td>
+                        <td
+                          className={`py-3 px-2 text-right font-bold ${
+                            grossProfit >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        >
+                          {formatCurrency(grossProfit)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
               </div>
             </div>
 
             {/* Expense List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                 Daftar Biaya Operasional
               </h2>
-              <div className="overflow-x-auto max-h-80 overflow-y-auto">
-                <table className="w-full">
-                  <thead className="sticky top-0 bg-white">
-                    <tr className="border-b border-gray-100">
-                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">
-                        Tanggal
-                      </th>
-                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">
-                        Kategori
-                      </th>
-                      <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">
-                        Deskripsi
-                      </th>
-                      <th className="text-right py-3 px-2 text-sm font-semibold text-gray-600">
-                        Jumlah
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expenses.map((expense) => (
-                      <tr key={expense.id} className="border-b border-gray-50">
-                        <td className="py-3 px-2 text-sm text-gray-600">
-                          {expense.date}
+              
+              {/* Mobile Card Layout */}
+              <div className="block sm:hidden">
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {expenses.map((expense) => (
+                    <div key={expense.id} className="bg-gray-50 rounded-lg p-3 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-gray-900 text-sm">
+                            {expense.description}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {expense.date}
+                          </div>
+                        </div>
+                        <div className="text-right ml-2 shrink-0">
+                          <div className="font-medium text-red-600 text-sm">
+                            {formatCurrency(expense.amount)}
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {expense.category}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-red-50 rounded-lg p-3 mt-3 border border-red-200">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-gray-900 text-sm">Total</span>
+                    <span className="font-bold text-red-600 text-sm">{formatCurrency(totalExpenses)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Table Layout */}
+              <div className="hidden sm:block">
+                <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                  <table className="w-full">
+                    <thead className="sticky top-0 bg-white">
+                      <tr className="border-b border-gray-100">
+                        <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">
+                          Tanggal
+                        </th>
+                        <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">
+                          Kategori
+                        </th>
+                        <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">
+                          Deskripsi
+                        </th>
+                        <th className="text-right py-3 px-2 text-sm font-semibold text-gray-600">
+                          Jumlah
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {expenses.map((expense) => (
+                        <tr key={expense.id} className="border-b border-gray-50">
+                          <td className="py-3 px-2 text-sm text-gray-600">
+                            {expense.date}
+                          </td>
+                          <td className="py-3 px-2">
+                            <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              {expense.category}
+                            </span>
+                          </td>
+                          <td className="py-3 px-2 text-sm text-gray-900">
+                            {expense.description}
+                          </td>
+                          <td className="py-3 px-2 text-right font-medium text-red-600">
+                            {formatCurrency(expense.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-gray-50">
+                        <td colSpan={3} className="py-3 px-2 font-semibold text-gray-900">
+                          Total
                         </td>
-                        <td className="py-3 px-2">
-                          <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            {expense.category}
-                          </span>
-                        </td>
-                        <td className="py-3 px-2 text-sm text-gray-900">
-                          {expense.description}
-                        </td>
-                        <td className="py-3 px-2 text-right font-medium text-red-600">
-                          {formatCurrency(expense.amount)}
+                        <td className="py-3 px-2 text-right font-bold text-red-600">
+                          {formatCurrency(totalExpenses)}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="bg-gray-50">
-                      <td colSpan={3} className="py-3 px-2 font-semibold text-gray-900">
-                        Total
-                      </td>
-                      <td className="py-3 px-2 text-right font-bold text-red-600">
-                        {formatCurrency(totalExpenses)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
+                    </tfoot>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
