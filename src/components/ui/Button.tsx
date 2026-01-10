@@ -51,10 +51,12 @@ export default function Button({
       {isLoading ? (
         <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
       ) : (
-        leftIcon
+        <>
+          {leftIcon}
+          {children}
+          {rightIcon}
+        </>
       )}
-      {children}
-      {rightIcon}
     </button>
   );
 }
