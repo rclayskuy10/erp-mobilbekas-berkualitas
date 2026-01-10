@@ -67,6 +67,35 @@ export default function InventoryPage() {
     photos: [] as string[],
   });
 
+  // Form state for editing car
+  const [editForm, setEditForm] = useState({
+    brand: '',
+    model: '',
+    year: '',
+    color: '',
+    plateNumber: '',
+    mileage: '',
+    engineCapacity: '',
+    fuelType: '',
+    transmission: '',
+    seats: '',
+    doors: '',
+    vin: '',
+    purchasePrice: '',
+    sellingPrice: '',
+    condition: '',
+    description: '',
+    photos: [] as string[],
+  });
+
+  // Form state for maintenance
+  const [maintenanceForm, setMaintenanceForm] = useState({
+    description: '',
+    cost: '',
+    date: new Date().toISOString().split('T')[0],
+    vendor: '',
+  });
+
   // Filter cars
   const filteredCars = useMemo(() => {
     return cars.filter((car) => {
@@ -98,6 +127,26 @@ export default function InventoryPage() {
 
   const handleEditCar = (car: Car) => {
     setSelectedCar(car);
+    // Populate edit form with car data
+    setEditForm({
+      brand: car.specs.brand,
+      model: car.specs.model,
+      year: car.specs.year.toString(),
+      color: car.specs.color,
+      plateNumber: car.specs.plateNumber,
+      mileage: car.specs.mileage.toString(),
+      engineCapacity: car.specs.engineCapacity,
+      fuelType: car.specs.fuelType,
+      transmission: car.specs.transmission,
+      seats: car.specs.seats.toString(),
+      doors: car.specs.doors.toString(),
+      vin: car.specs.vin,
+      purchasePrice: car.purchasePrice.toString(),
+      sellingPrice: car.sellingPrice.toString(),
+      condition: car.condition,
+      description: car.description,
+      photos: [...car.photos],
+    });
     setIsEditModalOpen(true);
   };
 
@@ -121,6 +170,60 @@ export default function InventoryPage() {
 
   const handleAddCar = () => {
     setIsAddModalOpen(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Convert files to base64 URLs
+    Promise.all(
+      files.map((file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            resolve(e.target?.result as string);
+          };
+          reader.readAsDataURL(file);
+        });
+      })
+    ).then((base64Files) => {
+      const currentPhotos = carForm.photos || [];
+      const newPhotos = [...currentPhotos, ...base64Files].slice(0, 5); // Max 5 photos
+      setCarForm({ ...carForm, photos: newPhotos });
+    });
+  };
+
+  const handleEditFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Convert files to base64 URLs
+    Promise.all(
+      files.map((file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            resolve(e.target?.result as string);
+          };
+          reader.readAsDataURL(file);
+        });
+      })
+    ).then((base64Files) => {
+      const currentPhotos = editForm.photos || [];
+      const newPhotos = [...currentPhotos, ...base64Files].slice(0, 5); // Max 5 photos
+      setEditForm({ ...editForm, photos: newPhotos });
+    });
+  };
+
+  const removePhoto = (index: number, isEdit = false) => {
+    if (isEdit) {
+      const newPhotos = editForm.photos.filter((_, i) => i !== index);
+      setEditForm({ ...editForm, photos: newPhotos });
+    } else {
+      const newPhotos = carForm.photos.filter((_, i) => i !== index);
+      setCarForm({ ...carForm, photos: newPhotos });
+    }
   };
 
   const handleSubmitCar = (e: React.FormEvent) => {
@@ -176,6 +279,79 @@ export default function InventoryPage() {
       condition: '',
       description: '',
       photos: [],
+    });
+  };
+
+  const handleSubmitEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedCar) return;
+
+    const updatedCar: Car = {
+      ...selectedCar,
+      specs: {
+        brand: editForm.brand,
+        model: editForm.model,
+        year: parseInt(editForm.year),
+        color: editForm.color,
+        plateNumber: editForm.plateNumber,
+        mileage: parseInt(editForm.mileage),
+        engineCapacity: editForm.engineCapacity,
+        fuelType: editForm.fuelType as 'petrol' | 'diesel' | 'hybrid' | 'electric',
+        transmission: editForm.transmission as 'manual' | 'automatic' | 'cvt',
+        seats: parseInt(editForm.seats),
+        doors: parseInt(editForm.doors),
+        vin: editForm.vin,
+      },
+      purchasePrice: parseInt(editForm.purchasePrice),
+      sellingPrice: parseInt(editForm.sellingPrice),
+      condition: editForm.condition as 'excellent' | 'good' | 'fair',
+      photos: editForm.photos,
+      description: editForm.description,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Recalculate HPP with current maintenance costs
+    updatedCar.hpp = updatedCar.purchasePrice + updatedCar.maintenanceCosts.reduce((sum, m) => sum + m.cost, 0);
+
+    setCars(cars.map(car => car.id === selectedCar.id ? updatedCar : car));
+    setIsEditModalOpen(false);
+    setSelectedCar(null);
+  };
+
+  const handleSubmitMaintenance = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedCar) return;
+
+    const newMaintenance = {
+      id: `maint-${Date.now()}`,
+      carId: selectedCar.id,
+      description: maintenanceForm.description,
+      cost: parseInt(maintenanceForm.cost),
+      date: maintenanceForm.date,
+      vendor: maintenanceForm.vendor,
+    };
+
+    const updatedCar = {
+      ...selectedCar,
+      maintenanceCosts: [...selectedCar.maintenanceCosts, newMaintenance],
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Recalculate HPP
+    updatedCar.hpp = updatedCar.purchasePrice + updatedCar.maintenanceCosts.reduce((sum, m) => sum + m.cost, 0);
+
+    setCars(cars.map(car => car.id === selectedCar.id ? updatedCar : car));
+    setIsMaintenanceModalOpen(false);
+    setSelectedCar(null);
+    
+    // Reset form
+    setMaintenanceForm({
+      description: '',
+      cost: '',
+      date: new Date().toISOString().split('T')[0],
+      vendor: '',
     });
   };
 
@@ -657,27 +833,46 @@ export default function InventoryPage() {
                     rows={4}
                   />
                   
-                  {/* URL Photo inputs */}
+                  {/* File Upload for Photos */}
                   <div className="space-y-3">
                     <label className="block text-sm font-medium text-gray-700">
-                      URL Foto Mobil (maksimal 5)
+                      Foto Mobil (maksimal 5)
                     </label>
-                    {[0, 1, 2, 3, 4].map((index) => (
-                      <Input
-                        key={index}
-                        placeholder={`URL foto ${index + 1} (opsional)`}
-                        value={carForm.photos[index] || ''}
-                        onChange={(e) => {
-                          const newPhotos = [...carForm.photos];
-                          if (e.target.value) {
-                            newPhotos[index] = e.target.value;
-                          } else {
-                            newPhotos.splice(index, 1);
-                          }
-                          setCarForm({ ...carForm, photos: newPhotos.filter(Boolean) });
-                        }}
+                    <div className="space-y-3">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                       />
-                    ))}
+                      
+                      {/* Photo Preview Grid */}
+                      {carForm.photos.length > 0 && (
+                        <div className="grid grid-cols-3 gap-2">
+                          {carForm.photos.map((photo, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={photo}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-20 object-cover rounded-lg border"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removePhoto(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-gray-500">
+                        Pilih gambar dari galeri atau kamera. Maksimal 5 foto.
+                      </p>
+                    </div>
                   </div>
                   
                   {/* Profit calculation preview */}
@@ -699,6 +894,301 @@ export default function InventoryPage() {
               </Button>
               <Button type="submit">
                 Simpan Mobil
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Edit Car Modal */}
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          title="Edit Mobil"
+          size="xl"
+        >
+          <form onSubmit={handleSubmitEdit} className="space-y-6">
+            {/* Similar structure to Add Car Modal but with editForm */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Spesifikasi Mobil</h3>
+                <div className="space-y-4">
+                  <Input
+                    label="Merk"
+                    value={editForm.brand}
+                    onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Model"
+                    value={editForm.model}
+                    onChange={(e) => setEditForm({ ...editForm, model: e.target.value })}
+                    required
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Tahun"
+                      type="number"
+                      value={editForm.year}
+                      onChange={(e) => setEditForm({ ...editForm, year: e.target.value })}
+                      min="1990"
+                      max={new Date().getFullYear()}
+                      required
+                    />
+                    <Input
+                      label="Warna"
+                      value={editForm.color}
+                      onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <Input
+                    label="Plat Nomor"
+                    value={editForm.plateNumber}
+                    onChange={(e) => setEditForm({ ...editForm, plateNumber: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Kilometer"
+                    type="number"
+                    value={editForm.mileage}
+                    onChange={(e) => setEditForm({ ...editForm, mileage: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Kapasitas Mesin"
+                    value={editForm.engineCapacity}
+                    onChange={(e) => setEditForm({ ...editForm, engineCapacity: e.target.value })}
+                    required
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      label="Jumlah Kursi"
+                      type="number"
+                      value={editForm.seats}
+                      onChange={(e) => setEditForm({ ...editForm, seats: e.target.value })}
+                      min="2"
+                      max="8"
+                      required
+                    />
+                    <Input
+                      label="Jumlah Pintu"
+                      type="number"
+                      value={editForm.doors}
+                      onChange={(e) => setEditForm({ ...editForm, doors: e.target.value })}
+                      min="2"
+                      max="5"
+                      required
+                    />
+                  </div>
+                  <Select
+                    label="Jenis BBM"
+                    value={editForm.fuelType}
+                    onChange={(e) => setEditForm({ ...editForm, fuelType: e.target.value })}
+                    options={[
+                      { value: 'petrol', label: 'Bensin' },
+                      { value: 'diesel', label: 'Diesel' },
+                      { value: 'hybrid', label: 'Hybrid' },
+                      { value: 'electric', label: 'Listrik' },
+                    ]}
+                    required
+                  />
+                  <Select
+                    label="Transmisi"
+                    value={editForm.transmission}
+                    onChange={(e) => setEditForm({ ...editForm, transmission: e.target.value })}
+                    options={[
+                      { value: 'manual', label: 'Manual' },
+                      { value: 'automatic', label: 'Otomatis' },
+                      { value: 'cvt', label: 'CVT' },
+                    ]}
+                    required
+                  />
+                  <Input
+                    label="VIN Number"
+                    value={editForm.vin}
+                    onChange={(e) => setEditForm({ ...editForm, vin: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Harga & Kondisi</h3>
+                <div className="space-y-4">
+                  <Input
+                    label="Harga Beli (Rp)"
+                    type="number"
+                    value={editForm.purchasePrice}
+                    onChange={(e) => setEditForm({ ...editForm, purchasePrice: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Harga Jual (Rp)"
+                    type="number"
+                    value={editForm.sellingPrice}
+                    onChange={(e) => setEditForm({ ...editForm, sellingPrice: e.target.value })}
+                    required
+                  />
+                  <Select
+                    label="Kondisi"
+                    value={editForm.condition}
+                    onChange={(e) => setEditForm({ ...editForm, condition: e.target.value })}
+                    options={[
+                      { value: 'excellent', label: 'Sangat Baik' },
+                      { value: 'good', label: 'Baik' },
+                      { value: 'fair', label: 'Cukup' },
+                    ]}
+                    required
+                  />
+                  <Textarea
+                    label="Deskripsi"
+                    value={editForm.description}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    rows={4}
+                  />
+                  
+                  {/* File Upload for Photos */}
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Foto Mobil (maksimal 5)
+                    </label>
+                    <div className="space-y-3">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleEditFileUpload}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      
+                      {/* Photo Preview Grid */}
+                      {editForm.photos.length > 0 && (
+                        <div className="grid grid-cols-3 gap-2">
+                          {editForm.photos.map((photo, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={photo}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-20 object-cover rounded-lg border"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removePhoto(index, true)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      <p className="text-xs text-gray-500">
+                        Pilih gambar dari galeri atau kamera. Maksimal 5 foto.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Profit calculation preview */}
+                  {editForm.purchasePrice && editForm.sellingPrice && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="text-sm text-gray-600">Estimasi Profit:</p>
+                      <p className="text-lg font-bold text-green-600">
+                        {formatCurrency(parseInt(editForm.sellingPrice) - parseInt(editForm.purchasePrice))}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="secondary" onClick={() => setIsEditModalOpen(false)} type="button">
+                Batal
+              </Button>
+              <Button type="submit">
+                Update Mobil
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Maintenance Modal */}
+        <Modal
+          isOpen={isMaintenanceModalOpen}
+          onClose={() => setIsMaintenanceModalOpen(false)}
+          title="Tambah Biaya Perawatan"
+          size="md"
+        >
+          <form onSubmit={handleSubmitMaintenance} className="space-y-4">
+            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <h4 className="font-medium text-gray-900">
+                {selectedCar?.specs.brand} {selectedCar?.specs.model}
+              </h4>
+              <p className="text-sm text-gray-600">{selectedCar?.specs.plateNumber}</p>
+            </div>
+            
+            <Input
+              label="Deskripsi Perawatan"
+              value={maintenanceForm.description}
+              onChange={(e) => setMaintenanceForm({ ...maintenanceForm, description: e.target.value })}
+              placeholder="Ganti oli, service berkala, perbaikan rem, dll."
+              required
+            />
+            
+            <Input
+              label="Biaya (Rp)"
+              type="number"
+              value={maintenanceForm.cost}
+              onChange={(e) => setMaintenanceForm({ ...maintenanceForm, cost: e.target.value })}
+              placeholder="500000"
+              required
+            />
+            
+            <Input
+              label="Tanggal"
+              type="date"
+              value={maintenanceForm.date}
+              onChange={(e) => setMaintenanceForm({ ...maintenanceForm, date: e.target.value })}
+              required
+            />
+            
+            <Input
+              label="Vendor/Bengkel"
+              value={maintenanceForm.vendor}
+              onChange={(e) => setMaintenanceForm({ ...maintenanceForm, vendor: e.target.value })}
+              placeholder="Nama bengkel atau vendor (opsional)"
+            />
+            
+            {/* Current maintenance history */}
+            {selectedCar && selectedCar.maintenanceCosts.length > 0 && (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h5 className="font-medium text-gray-900 mb-2">Riwayat Perawatan</h5>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {selectedCar.maintenanceCosts.map((m) => (
+                    <div key={m.id} className="flex justify-between text-sm">
+                      <div>
+                        <p className="font-medium">{m.description}</p>
+                        <p className="text-gray-600">{m.date}</p>
+                      </div>
+                      <p className="font-medium text-red-600">{formatCurrency(m.cost)}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t pt-2 mt-2">
+                  <p className="text-sm font-medium">
+                    Total Biaya Perawatan: {formatCurrency(selectedCar.maintenanceCosts.reduce((sum, m) => sum + m.cost, 0))}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button variant="secondary" onClick={() => setIsMaintenanceModalOpen(false)} type="button">
+                Batal
+              </Button>
+              <Button type="submit">
+                Tambah Biaya
               </Button>
             </div>
           </form>
