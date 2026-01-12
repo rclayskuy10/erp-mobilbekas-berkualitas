@@ -513,7 +513,7 @@ export default function ReportsPage() {
                       <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-1">
                         Gross Profit YTD
                       </p>
-                      <p className="text-xl font-bold text-emerald-900 tracking-tight">
+                      <p className="text-sm sm:text-lg font-bold text-emerald-900 tracking-tight break-words">
                         {formatCurrency(grossProfit)}
                       </p>
                       <p className="text-xs text-emerald-600 mt-1 font-medium">
@@ -537,7 +537,7 @@ export default function ReportsPage() {
                       <p className={`text-xs font-semibold ${netProfit >= 0 ? 'text-blue-700' : 'text-red-700'} uppercase tracking-wide mb-1`}>
                         Net Profit YTD
                       </p>
-                      <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-blue-900' : 'text-red-900'} tracking-tight`}>
+                      <p className={`text-sm sm:text-lg font-bold ${netProfit >= 0 ? 'text-blue-900' : 'text-red-900'} tracking-tight break-words`}>
                         {formatCurrency(netProfit)}
                       </p>
                       <p className={`text-xs ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'} mt-1 font-medium`}>
