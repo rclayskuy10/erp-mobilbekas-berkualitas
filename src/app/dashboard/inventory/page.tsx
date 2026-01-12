@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
@@ -36,7 +36,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
-export default function InventoryPage() {
+function InventoryContent() {
   const { hasPermission } = useAuth();
   const searchParams = useSearchParams();
   const highlightId = searchParams.get('highlight');
@@ -1348,5 +1348,13 @@ export default function InventoryPage() {
         </Modal>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+export default function InventoryPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-600">Loading...</div></div>}>
+      <InventoryContent />
+    </Suspense>
   );
 }
