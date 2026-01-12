@@ -38,6 +38,10 @@ export default function UsersPage() {
     email: '',
     password: '',
     role: 'staff' as UserRole,
+    phone: '',
+    isSalesPerson: false,
+    salesTarget: 0,
+    commissionRate: 0,
   });
 
   // Filter users
@@ -64,10 +68,15 @@ export default function UsersPage() {
       role: formData.role,
       createdAt: new Date().toISOString(),
       isActive: true,
+      phone: formData.phone || undefined,
+      isSalesPerson: formData.isSalesPerson,
+      salesTarget: formData.isSalesPerson ? formData.salesTarget : undefined,
+      commissionRate: formData.isSalesPerson ? formData.commissionRate : undefined,
+      joinDate: new Date().toISOString(),
     };
     setUsers([newUser, ...users]);
     setIsAddModalOpen(false);
-    setFormData({ name: '', email: '', password: '', role: 'staff' });
+    setFormData({ name: '', email: '', password: '', role: 'staff', phone: '', isSalesPerson: false, salesTarget: 0, commissionRate: 0 });
   };
 
   const handleEditUser = (e: React.FormEvent) => {
@@ -82,13 +91,17 @@ export default function UsersPage() {
                 email: formData.email,
                 role: formData.role,
                 password: formData.password || u.password,
+                phone: formData.phone || undefined,
+                isSalesPerson: formData.isSalesPerson,
+                salesTarget: formData.isSalesPerson ? formData.salesTarget : undefined,
+                commissionRate: formData.isSalesPerson ? formData.commissionRate : undefined,
               }
             : u
         )
       );
       setIsEditModalOpen(false);
       setSelectedUser(null);
-      setFormData({ name: '', email: '', password: '', role: 'staff' });
+      setFormData({ name: '', email: '', password: '', role: 'staff', phone: '', isSalesPerson: false, salesTarget: 0, commissionRate: 0 });
     }
   };
 
@@ -115,6 +128,10 @@ export default function UsersPage() {
       email: user.email,
       password: '',
       role: user.role,
+      phone: user.phone || '',
+      isSalesPerson: user.isSalesPerson || false,
+      salesTarget: user.salesTarget || 0,
+      commissionRate: user.commissionRate || 0,
     });
     setIsEditModalOpen(true);
   };
@@ -215,6 +232,9 @@ export default function UsersPage() {
                       Role
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Sales Info
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -236,6 +256,9 @@ export default function UsersPage() {
                           <div>
                             <p className="font-medium text-gray-900">{user.name}</p>
                             <p className="text-sm text-gray-500">{user.email}</p>
+                            {user.phone && (
+                              <p className="text-xs text-gray-400">{user.phone}</p>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -247,6 +270,25 @@ export default function UsersPage() {
                         >
                           {getRoleDisplayName(user.role)}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {user.isSalesPerson ? (
+                          <div className="space-y-1">
+                            <Badge variant="info">Sales Person</Badge>
+                            {user.salesTarget && (
+                              <p className="text-xs text-gray-600">
+                                Target: Rp {(user.salesTarget / 1000000).toFixed(0)}jt
+                              </p>
+                            )}
+                            {user.commissionRate && (
+                              <p className="text-xs text-gray-600">
+                                Komisi: {user.commissionRate}%
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge variant={user.isActive ? 'success' : 'danger'}>
@@ -412,6 +454,53 @@ export default function UsersPage() {
                 { value: 'staff', label: 'Staff' },
               ]}
             />
+            <Input
+              label="No. Telepon"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="08123456789"
+            />
+            
+            {/* Sales Person Toggle */}
+            <div className="border-t pt-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isSalesPerson}
+                  onChange={(e) => setFormData({ ...formData, isSalesPerson: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Jadikan Sales Person
+                </span>
+              </label>
+            </div>
+
+            {/* Sales Fields - Only show if isSalesPerson is checked */}
+            {formData.isSalesPerson && (
+              <div className="space-y-4 bg-blue-50 p-4 rounded-lg">
+                <h3 className="text-sm font-semibold text-blue-900">Pengaturan Sales</h3>
+                <Input
+                  label="Target Penjualan (per bulan)"
+                  type="number"
+                  value={formData.salesTarget}
+                  onChange={(e) => setFormData({ ...formData, salesTarget: Number(e.target.value) })}
+                  placeholder="500000000"
+                  helperText="Dalam Rupiah, contoh: 500000000 = 500 juta"
+                />
+                <Input
+                  label="Persentase Komisi (%)"
+                  type="number"
+                  step="0.1"
+                  value={formData.commissionRate}
+                  onChange={(e) => setFormData({ ...formData, commissionRate: Number(e.target.value) })}
+                  placeholder="2.5"
+                  helperText="Contoh: 2.5 untuk komisi 2.5%"
+                />
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
                 variant="secondary"
@@ -465,6 +554,53 @@ export default function UsersPage() {
                 { value: 'staff', label: 'Staff' },
               ]}
             />
+            <Input
+              label="No. Telepon"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="08123456789"
+            />
+            
+            {/* Sales Person Toggle */}
+            <div className="border-t pt-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.isSalesPerson}
+                  onChange={(e) => setFormData({ ...formData, isSalesPerson: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Jadikan Sales Person
+                </span>
+              </label>
+            </div>
+
+            {/* Sales Fields - Only show if isSalesPerson is checked */}
+            {formData.isSalesPerson && (
+              <div className="space-y-4 bg-blue-50 p-4 rounded-lg">
+                <h3 className="text-sm font-semibold text-blue-900">Pengaturan Sales</h3>
+                <Input
+                  label="Target Penjualan (per bulan)"
+                  type="number"
+                  value={formData.salesTarget}
+                  onChange={(e) => setFormData({ ...formData, salesTarget: Number(e.target.value) })}
+                  placeholder="500000000"
+                  helperText="Dalam Rupiah, contoh: 500000000 = 500 juta"
+                />
+                <Input
+                  label="Persentase Komisi (%)"
+                  type="number"
+                  step="0.1"
+                  value={formData.commissionRate}
+                  onChange={(e) => setFormData({ ...formData, commissionRate: Number(e.target.value) })}
+                  placeholder="2.5"
+                  helperText="Contoh: 2.5 untuk komisi 2.5%"
+                />
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
                 variant="secondary"

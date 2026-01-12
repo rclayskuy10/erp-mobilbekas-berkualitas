@@ -10,6 +10,12 @@ export interface User {
   avatar?: string;
   createdAt: string;
   isActive: boolean;
+  // Sales-specific fields
+  isSalesPerson?: boolean;
+  salesTarget?: number; // Monthly target in IDR
+  commissionRate?: number; // Percentage (e.g., 2.5 for 2.5%)
+  phone?: string;
+  joinDate?: string;
 }
 
 export interface AuthUser {
@@ -56,6 +62,8 @@ export interface Car {
   updatedAt: string;
   grnId?: string;
   saleId?: string;
+  stnkNumber?: string;
+  stnkExpiredDate?: string;
 }
 
 // Maintenance / Repair Types
@@ -74,7 +82,8 @@ export interface GRN {
   grnNumber: string;
   carId: string;
   purchaseDate: string;
-  supplierName: string;
+  vendorId?: string; // Link to Vendor
+  supplierName: string; // Kept for backward compatibility
   supplierContact?: string;
   purchasePrice: number;
   notes?: string;
@@ -159,4 +168,111 @@ export interface Permission {
 export interface RolePermissions {
   role: UserRole;
   permissions: Permission[];
+}
+
+// Vendor Types
+export interface Vendor {
+  id: string;
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email?: string;
+  address: string;
+  type: 'individual' | 'showroom' | 'leasing' | 'auction';
+  rating: number; // 1-5
+  totalTransactions: number;
+  totalValue: number;
+  paymentTerms: string;
+  notes?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+// Document Management Types
+export type DocumentType = 'bpkb' | 'stnk' | 'faktur' | 'ktp' | 'kwitansi' | 'other';
+export type DocumentStatus = 'valid' | 'expired' | 'pending' | 'missing';
+
+export interface CarDocument {
+  id: string;
+  carId: string;
+  type: DocumentType;
+  name: string;
+  fileUrl?: string;
+  documentNumber?: string;
+  issueDate?: string;
+  expiryDate?: string;
+  status: DocumentStatus;
+  notes?: string;
+  uploadedBy: string;
+  createdAt: string;
+}
+
+// Service History Types
+export interface ServiceRecord {
+  id: string;
+  carId: string;
+  serviceDate: string;
+  serviceType: 'routine' | 'repair' | 'inspection' | 'bodywork' | 'other';
+  description: string;
+  vendor: string;
+  cost: number;
+  partsReplaced?: string[];
+  mileageAtService: number;
+  nextServiceMileage?: number;
+  beforeCondition?: string;
+  afterCondition?: string;
+  photos?: string[];
+  performedBy: string;
+  createdAt: string;
+}
+
+// Notification Types
+export type NotificationType = 'payment' | 'stock' | 'document' | 'sales' | 'system';
+export type NotificationPriority = 'high' | 'medium' | 'low';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  priority: NotificationPriority;
+  title: string;
+  message: string;
+  relatedId?: string; // ID of related entity (carId, saleId, etc)
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+// Stock Aging Types
+export interface StockAgingData {
+  carId: string;
+  daysInStock: number;
+  category: '0-30' | '31-60' | '61-90' | '90+';
+  purchasePrice: number;
+  currentValue: number;
+  depreciation: number;
+}
+
+// Sales Performance Types
+export interface SalesPerformance {
+  userId: string;
+  userName: string;
+  totalSales: number;
+  totalRevenue: number;
+  totalProfit: number;
+  conversionRate: number;
+  avgDealSize: number;
+  target: number;
+  achievement: number;
+}
+
+// Inventory Analytics Types
+export interface BrandAnalytics {
+  brand: string;
+  totalUnits: number;
+  soldUnits: number;
+  availableUnits: number;
+  totalRevenue: number;
+  totalProfit: number;
+  avgDaysToSell: number;
+  turnoverRate: number;
 }

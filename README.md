@@ -30,7 +30,7 @@ Sistem ERP internal untuk pengelolaan bisnis jual beli mobil bekas dengan fitur 
 
 ### 4. GRN (Goods Receipt Note)
 - Pencatatan pembelian mobil masuk
-- Data supplier (nama, kontak)
+- Data beli dari (nama, kontak)
 - Informasi lengkap mobil yang dibeli
 - Tracking siapa yang menerima
 

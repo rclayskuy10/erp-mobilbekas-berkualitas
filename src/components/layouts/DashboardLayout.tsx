@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth, getRoleDisplayName, getRoleBadgeColor } from '@/contexts/AuthContext';
+import NotificationSystem from '@/components/notification/NotificationSystem';
 import {
   LayoutDashboard,
   Car,
@@ -17,13 +18,17 @@ import {
   X,
   ChevronDown,
   User,
+  Building2,
+  LineChart,
 } from 'lucide-react';
 
 const menuItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, module: 'dashboard' },
   { name: 'Inventory Mobil', href: '/dashboard/inventory', icon: Car, module: 'inventory' },
-  { name: 'GRN (Pembelian)', href: '/dashboard/grn', icon: FileInput, module: 'grn' },
+  { name: 'Pembelian', href: '/dashboard/grn', icon: FileInput, module: 'grn' },
   { name: 'Penjualan', href: '/dashboard/sales', icon: ShoppingCart, module: 'sales' },
+  { name: 'Vendor', href: '/dashboard/vendors', icon: Building2, module: 'inventory' },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: LineChart, module: 'reports' },
   { name: 'Laporan', href: '/dashboard/reports', icon: BarChart3, module: 'reports' },
   { name: 'Manajemen User', href: '/dashboard/users', icon: Users, module: 'users' },
 ];
@@ -128,12 +133,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </h1>
           </div>
 
-          {/* User dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-gray-100"
-            >
+          {/* Notification and User dropdown */}
+          <div className="flex items-center gap-2">
+            {/* Notification System */}
+            <NotificationSystem />
+
+            {/* User dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-gray-100"
+              >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white font-semibold">
                 {user?.name?.charAt(0) || 'U'}
               </div>
@@ -172,6 +182,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
               </>
             )}
+            </div>
           </div>
         </header>
 

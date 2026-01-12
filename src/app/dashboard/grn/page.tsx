@@ -17,7 +17,7 @@ import { formatCurrency, formatDate, generateId, generateDocNumber } from '@/lib
 import { GRN } from '@/types';
 import { Plus, Eye, Edit, Trash2, Package, FileText } from 'lucide-react';
 
-export default function GRNPage() {
+export default function PembelianPage() {
   const { hasPermission, user } = useAuth();
   const [grns, setGrns] = useState<GRN[]>(initialGrns);
   const [searchQuery, setSearchQuery] = useState('');
@@ -129,7 +129,7 @@ export default function GRNPage() {
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">GRN (Goods Receipt Note)</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Pembelian Mobil</h1>
               <p className="text-gray-600">Pencatatan pembelian mobil masuk</p>
             </div>
             {hasPermission('grn', 'create') && (
@@ -137,7 +137,7 @@ export default function GRNPage() {
                 leftIcon={<Plus className="h-4 w-4" />}
                 onClick={() => setIsAddModalOpen(true)}
               >
-                Buat GRN Baru
+                Buat Pembelian Baru
               </Button>
             )}
           </div>
@@ -150,7 +150,7 @@ export default function GRNPage() {
                   <FileText className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Total GRN</p>
+                  <p className="text-sm text-gray-500">Total Pembelian</p>
                   <p className="text-2xl font-bold text-gray-900">{grns.length}</p>
                 </div>
               </div>
@@ -184,7 +184,7 @@ export default function GRNPage() {
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Cari nomor GRN, supplier, atau mobil..."
+              placeholder="Cari nomor pembelian, penjual, atau mobil..."
               className="max-w-md"
             />
           </div>
@@ -205,7 +205,7 @@ export default function GRNPage() {
                       Mobil
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Supplier
+                      Beli Dari
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Harga Beli
@@ -344,14 +344,14 @@ export default function GRNPage() {
                       </div>
                     </div>
 
-                    {/* Supplier Info */}
+                    {/* Info Beli Dari */}
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                        Informasi Supplier
+                        Informasi Beli Dari
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Nama Supplier</p>
+                          <p className="text-sm text-gray-500">Nama</p>
                           <p className="font-medium">{selectedGrn.supplierName}</p>
                         </div>
                         <div>
@@ -400,20 +400,22 @@ export default function GRNPage() {
           size="xl"
         >
           <form onSubmit={handleSubmitGrn} className="space-y-6">
-            {/* Supplier Section */}
+            {/* Info Beli Dari Section */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informasi Supplier</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informasi Beli Dari</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <Input
-                  label="Nama Supplier"
+                  label="Nama"
                   value={formData.supplierName}
                   onChange={(e) => setFormData({ ...formData, supplierName: e.target.value })}
+                  placeholder="Nama supplier/penjual"
                   required
                 />
                 <Input
-                  label="Kontak Supplier"
+                  label="Kontak"
                   value={formData.supplierContact}
                   onChange={(e) => setFormData({ ...formData, supplierContact: e.target.value })}
+                  placeholder="Nomor telepon/email"
                 />
               </div>
             </div>
@@ -426,12 +428,14 @@ export default function GRNPage() {
                   label="Merk"
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  placeholder="cth: Toyota, Honda"
                   required
                 />
                 <Input
                   label="Model"
                   value={formData.model}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  placeholder="cth: Avanza, Jazz"
                   required
                 />
                 <Input
@@ -439,18 +443,21 @@ export default function GRNPage() {
                   type="number"
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                  placeholder="cth: 2024"
                   required
                 />
                 <Input
                   label="Warna"
                   value={formData.color}
                   onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  placeholder="cth: Hitam, Putih"
                   required
                 />
                 <Input
                   label="Plat Nomor"
                   value={formData.plateNumber}
                   onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value })}
+                  placeholder="cth: B 1234 ABC"
                   required
                 />
                 <Input
@@ -458,6 +465,7 @@ export default function GRNPage() {
                   type="number"
                   value={formData.mileage}
                   onChange={(e) => setFormData({ ...formData, mileage: e.target.value })}
+                  placeholder="cth: 50000"
                   required
                 />
                 <Input
@@ -505,6 +513,7 @@ export default function GRNPage() {
                   label="Harga Beli"
                   value={formData.purchasePrice}
                   onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value })}
+                  placeholder="Masukkan harga beli"
                   required
                 />
               </div>
@@ -513,7 +522,7 @@ export default function GRNPage() {
                   label="Catatan"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Catatan tambahan..."
+                  placeholder="Tambahkan catatan khusus, kondisi mobil, dll"
                 />
               </div>
             </div>

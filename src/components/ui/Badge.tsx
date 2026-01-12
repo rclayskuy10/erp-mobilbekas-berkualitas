@@ -6,6 +6,7 @@ interface BadgeProps {
   children: React.ReactNode;
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'purple';
   size?: 'sm' | 'md';
+  className?: string;
 }
 
 const variantClasses = {
@@ -26,10 +27,11 @@ export default function Badge({
   children,
   variant = 'default',
   size = 'sm',
+  className = '',
 }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center font-medium rounded-full ${variantClasses[variant]} ${sizeClasses[size]}`}
+      className={`inline-flex items-center font-medium rounded-full ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
     >
       {children}
     </span>

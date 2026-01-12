@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
@@ -13,7 +14,7 @@ import SearchInput from '@/components/ui/SearchInput';
 import Badge from '@/components/ui/Badge';
 import ImageGallery from '@/components/ui/ImageGallery';
 import { useAuth } from '@/contexts/AuthContext';
-import { cars as initialCars, maintenanceCosts } from '@/data/dummy';
+import { cars as initialCars, maintenanceCosts, vendors } from '@/data/dummy';
 import {
   formatCurrency,
   formatNumber,
@@ -37,6 +38,9 @@ import {
 
 export default function InventoryPage() {
   const { hasPermission } = useAuth();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+  
   const [cars, setCars] = useState<Car[]>(initialCars);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -46,6 +50,25 @@ export default function InventoryPage() {
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+  // Handle highlight from notification
+  useEffect(() => {
+    if (highlightId) {
+      const car = cars.find(c => c.id === highlightId);
+      if (car) {
+        setHighlightedId(highlightId);
+        // Auto open view modal for highlighted car
+        setSelectedCar(car);
+        setIsViewModalOpen(true);
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          setHighlightedId(null);
+        }, 3000);
+      }
+    }
+  }, [highlightId, cars]);
   
   // Form state for adding new car
   const [carForm, setCarForm] = useState({
@@ -66,6 +89,8 @@ export default function InventoryPage() {
     condition: '',
     description: '',
     photos: [] as string[],
+    stnkNumber: '',
+    stnkExpiredDate: '',
   });
 
   // Form state for editing car
@@ -87,6 +112,8 @@ export default function InventoryPage() {
     condition: '',
     description: '',
     photos: [] as string[],
+    stnkNumber: '',
+    stnkExpiredDate: '',
   });
 
   // Form state for maintenance
@@ -147,6 +174,8 @@ export default function InventoryPage() {
       condition: car.condition,
       description: car.description,
       photos: [...car.photos],
+      stnkNumber: car.stnkNumber || '',
+      stnkExpiredDate: car.stnkExpiredDate || '',
     });
     setIsEditModalOpen(true);
   };
@@ -256,6 +285,8 @@ export default function InventoryPage() {
       hpp: Number(carForm.purchasePrice) || 0, // Initial HPP = purchase price
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      stnkNumber: carForm.stnkNumber || undefined,
+      stnkExpiredDate: carForm.stnkExpiredDate || undefined,
     };
 
     setCars([newCar, ...cars]);
@@ -280,6 +311,8 @@ export default function InventoryPage() {
       condition: '',
       description: '',
       photos: [],
+      stnkNumber: '',
+      stnkExpiredDate: '',
     });
   };
 
@@ -310,6 +343,8 @@ export default function InventoryPage() {
       photos: editForm.photos,
       description: editForm.description,
       updatedAt: new Date().toISOString(),
+      stnkNumber: editForm.stnkNumber || undefined,
+      stnkExpiredDate: editForm.stnkExpiredDate || undefined,
     };
 
     // Recalculate HPP with current maintenance costs
@@ -426,14 +461,21 @@ export default function InventoryPage() {
           </div>
 
           {/* Cars Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCars.map((car) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {filteredCars.map((car) => {
+              const isHighlighted = highlightedId === car.id;
+              return (
               <div
                 key={car.id}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+                onClick={() => handleViewCar(car)}
+                className={`bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-all cursor-pointer ${
+                  isHighlighted 
+                    ? 'border-blue-500 border-2 ring-4 ring-blue-200 animate-pulse' 
+                    : 'border-gray-100'
+                }`}
               >
                 {/* Car Image */}
-                <div className="relative h-48">
+                <div className="relative h-32 md:h-48">
                   {car.photos.length > 0 ? (
                     <img
                       src={car.photos[0]}
@@ -442,10 +484,10 @@ export default function InventoryPage() {
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <span className="text-gray-400">Tidak ada foto</span>
+                      <span className="text-gray-400 text-xs md:text-sm">Tidak ada foto</span>
                     </div>
                   )}
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-2 right-2">
                     <Badge variant={getStatusBadgeVariant(car.status)}>
                       {getStatusDisplayName(car.status)}
                     </Badge>
@@ -453,32 +495,32 @@ export default function InventoryPage() {
                 </div>
 
                 {/* Car Info */}
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                <div className="p-3 md:p-4">
+                  <h3 className="text-sm md:text-lg font-semibold text-gray-900 truncate">
                     {car.specs.brand} {car.specs.model}
                   </h3>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-xs md:text-sm text-gray-500 mt-1 truncate">
                     {car.specs.year} • {car.specs.plateNumber}
                   </p>
 
-                  <div className="grid grid-cols-2 gap-2 mt-4 text-sm">
-                    <div>
+                  <div className="grid grid-cols-2 gap-1 md:gap-2 mt-3 md:mt-4 text-xs md:text-sm">
+                    <div className="truncate">
                       <span className="text-gray-500">KM:</span>
                       <span className="ml-1 font-medium">{formatNumber(car.specs.mileage)}</span>
                     </div>
-                    <div>
+                    <div className="truncate">
                       <span className="text-gray-500">Transmisi:</span>
                       <span className="ml-1 font-medium">
                         {getTransmissionDisplayName(car.specs.transmission)}
                       </span>
                     </div>
-                    <div>
+                    <div className="truncate">
                       <span className="text-gray-500">BBM:</span>
                       <span className="ml-1 font-medium">
                         {getFuelTypeDisplayName(car.specs.fuelType)}
                       </span>
                     </div>
-                    <div>
+                    <div className="truncate">
                       <span className="text-gray-500">Kondisi:</span>
                       <span className="ml-1 font-medium">
                         {getConditionDisplayName(car.condition)}
@@ -486,18 +528,18 @@ export default function InventoryPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-gray-100">
                     <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-gray-500">Harga Jual</p>
-                        <p className="text-lg font-bold text-blue-600">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs md:text-sm text-gray-500">Harga Jual</p>
+                        <p className="text-sm md:text-lg font-bold text-blue-600 truncate">
                           {formatCurrency(car.sellingPrice)}
                         </p>
                       </div>
                       {car.status === 'sold' && (
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">Profit</p>
-                          <p className="text-lg font-bold text-green-600">
+                        <div className="text-right min-w-0 flex-1">
+                          <p className="text-xs md:text-sm text-gray-500">Profit</p>
+                          <p className="text-sm md:text-lg font-bold text-green-600 truncate">
                             {formatCurrency(calculateProfit(car.sellingPrice, car.hpp))}
                           </p>
                         </div>
@@ -506,39 +548,42 @@ export default function InventoryPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleViewCar(car)}
-                      leftIcon={<Eye className="h-4 w-4" />}
-                    >
-                      Detail
-                    </Button>
+                  <div className="flex gap-1 md:gap-2 mt-3 md:mt-4">
                     {hasPermission('inventory', 'edit') && car.status !== 'sold' && (
                       <>
                         <Button
-                          variant="ghost"
+                          variant="secondary"
                           size="sm"
-                          onClick={() => handleEditCar(car)}
-                          leftIcon={<Edit className="h-4 w-4" />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditCar(car);
+                          }}
+                          leftIcon={<Edit className="h-3 md:h-4 w-3 md:w-4" />}
+                          className="flex-1 text-xs md:text-sm"
                         >
-                          Edit
+                          <span className="hidden md:inline">Edit</span>
+                          <span className="md:hidden">Edit</span>
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleMaintenanceCar(car)}
-                          leftIcon={<Wrench className="h-4 w-4" />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMaintenanceCar(car);
+                          }}
+                          leftIcon={<Wrench className="h-3 md:h-4 w-3 md:w-4" />}
+                          className="flex-1 text-xs md:text-sm"
                         >
-                          Biaya
+                          <span className="hidden md:inline">Biaya</span>
+                          <span className="md:hidden">Biaya</span>
                         </Button>
                       </>
                     )}
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {filteredCars.length === 0 && (
@@ -608,6 +653,20 @@ export default function InventoryPage() {
                       <dt className="text-gray-500">VIN</dt>
                       <dd className="font-medium text-sm">{selectedCar.specs.vin}</dd>
                     </div>
+                    {selectedCar.stnkNumber && (
+                      <>
+                        <div className="flex justify-between border-t pt-2 mt-2">
+                          <dt className="text-gray-500">Nomor STNK</dt>
+                          <dd className="font-medium">{selectedCar.stnkNumber}</dd>
+                        </div>
+                        {selectedCar.stnkExpiredDate && (
+                          <div className="flex justify-between">
+                            <dt className="text-gray-500">Expired STNK</dt>
+                            <dd className="font-medium">{new Date(selectedCar.stnkExpiredDate).toLocaleDateString('id-ID')}</dd>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </dl>
                 </div>
 
@@ -690,14 +749,14 @@ export default function InventoryPage() {
                     label="Merk"
                     value={carForm.brand}
                     onChange={(e) => setCarForm({ ...carForm, brand: e.target.value })}
-                    placeholder="Toyota"
+                    placeholder="Contoh: Toyota, Honda, Mitsubishi"
                     required
                   />
                   <Input
                     label="Model"
                     value={carForm.model}
                     onChange={(e) => setCarForm({ ...carForm, model: e.target.value })}
-                    placeholder="Avanza"
+                    placeholder="Contoh: Avanza, CR-V, Pajero"
                     required
                   />
                   <div className="grid grid-cols-2 gap-3">
@@ -706,6 +765,7 @@ export default function InventoryPage() {
                       type="number"
                       value={carForm.year}
                       onChange={(e) => setCarForm({ ...carForm, year: e.target.value })}
+                      placeholder="2020"
                       min="1990"
                       max={new Date().getFullYear()}
                       required
@@ -714,7 +774,7 @@ export default function InventoryPage() {
                       label="Warna"
                       value={carForm.color}
                       onChange={(e) => setCarForm({ ...carForm, color: e.target.value })}
-                      placeholder="Putih"
+                      placeholder="Contoh: Putih, Hitam, Silver"
                       required
                     />
                   </div>
@@ -722,7 +782,7 @@ export default function InventoryPage() {
                     label="Plat Nomor"
                     value={carForm.plateNumber}
                     onChange={(e) => setCarForm({ ...carForm, plateNumber: e.target.value })}
-                    placeholder="B 1234 ABC"
+                    placeholder="Contoh: B 1234 ABC"
                     required
                   />
                   <Input
@@ -730,14 +790,14 @@ export default function InventoryPage() {
                     type="number"
                     value={carForm.mileage}
                     onChange={(e) => setCarForm({ ...carForm, mileage: e.target.value })}
-                    placeholder="50000"
+                    placeholder="Masukkan kilometer saat ini"
                     required
                   />
                   <Input
                     label="Kapasitas Mesin"
                     value={carForm.engineCapacity}
                     onChange={(e) => setCarForm({ ...carForm, engineCapacity: e.target.value })}
-                    placeholder="1.3L"
+                    placeholder="Contoh: 1.3L, 1.5L, 2.0L"
                     required
                   />
                   <div className="grid grid-cols-2 gap-3">
@@ -746,6 +806,7 @@ export default function InventoryPage() {
                       type="number"
                       value={carForm.seats}
                       onChange={(e) => setCarForm({ ...carForm, seats: e.target.value })}
+                      placeholder="5"
                       min="2"
                       max="8"
                       required
@@ -755,6 +816,7 @@ export default function InventoryPage() {
                       type="number"
                       value={carForm.doors}
                       onChange={(e) => setCarForm({ ...carForm, doors: e.target.value })}
+                      placeholder="4"
                       min="2"
                       max="5"
                       required
@@ -789,9 +851,27 @@ export default function InventoryPage() {
                     label="VIN Number"
                     value={carForm.vin}
                     onChange={(e) => setCarForm({ ...carForm, vin: e.target.value })}
-                    placeholder="WBAVD53568GV45789"
+                    placeholder="Masukkan nomor VIN kendaraan"
                     required
                   />
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Data STNK</h4>
+                    <div className="space-y-3">
+                      <Input
+                        label="Nomor STNK"
+                        value={carForm.stnkNumber}
+                        onChange={(e) => setCarForm({ ...carForm, stnkNumber: e.target.value })}
+                        placeholder="Masukkan nomor STNK"
+                      />
+                      <Input
+                        label="Tanggal Expired STNK"
+                        type="date"
+                        value={carForm.stnkExpiredDate}
+                        onChange={(e) => setCarForm({ ...carForm, stnkExpiredDate: e.target.value })}
+                        placeholder="Pilih tanggal expired"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -802,14 +882,14 @@ export default function InventoryPage() {
                     label="Harga Beli"
                     value={carForm.purchasePrice}
                     onChange={(e) => setCarForm({ ...carForm, purchasePrice: e.target.value })}
-                    placeholder="150000000"
+                    placeholder="Masukkan harga beli mobil"
                     required
                   />
                   <CurrencyInput
                     label="Harga Jual"
                     value={carForm.sellingPrice}
                     onChange={(e) => setCarForm({ ...carForm, sellingPrice: e.target.value })}
-                    placeholder="165000000"
+                    placeholder="Masukkan harga jual yang diinginkan"
                     required
                   />
                   <Select
@@ -828,7 +908,7 @@ export default function InventoryPage() {
                     label="Deskripsi"
                     value={carForm.description}
                     onChange={(e) => setCarForm({ ...carForm, description: e.target.value })}
-                    placeholder="Kondisi mobil, riwayat perawatan, fitur unggulan..."
+                    placeholder="Tuliskan kondisi mobil, riwayat perawatan, fitur unggulan, dan informasi penting lainnya..."
                     rows={4}
                   />
                   
@@ -847,7 +927,7 @@ export default function InventoryPage() {
                       />
                       
                       {/* Photo Preview Grid */}
-                      {carForm.photos.length > 0 && (
+                      {carForm.photos.length > 0 ? (
                         <div className="grid grid-cols-3 gap-2">
                           {carForm.photos.map((photo, index) => (
                             <div key={index} className="relative group">
@@ -865,6 +945,14 @@ export default function InventoryPage() {
                               </button>
                             </div>
                           ))}
+                        </div>
+                      ) : (
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
+                          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="mt-2 text-sm text-gray-600 font-medium">Belum ada foto yang dipilih</p>
+                          <p className="mt-1 text-xs text-gray-500">Klik tombol "Choose Files" di atas untuk mengunggah foto</p>
                         </div>
                       )}
                       
@@ -915,12 +1003,14 @@ export default function InventoryPage() {
                     label="Merk"
                     value={editForm.brand}
                     onChange={(e) => setEditForm({ ...editForm, brand: e.target.value })}
+                    placeholder="Contoh: Toyota, Honda, Mitsubishi"
                     required
                   />
                   <Input
                     label="Model"
                     value={editForm.model}
                     onChange={(e) => setEditForm({ ...editForm, model: e.target.value })}
+                    placeholder="Contoh: Avanza, CR-V, Pajero"
                     required
                   />
                   <div className="grid grid-cols-2 gap-3">
@@ -929,6 +1019,7 @@ export default function InventoryPage() {
                       type="number"
                       value={editForm.year}
                       onChange={(e) => setEditForm({ ...editForm, year: e.target.value })}
+                      placeholder="2020"
                       min="1990"
                       max={new Date().getFullYear()}
                       required
@@ -937,6 +1028,7 @@ export default function InventoryPage() {
                       label="Warna"
                       value={editForm.color}
                       onChange={(e) => setEditForm({ ...editForm, color: e.target.value })}
+                      placeholder="Contoh: Putih, Hitam, Silver"
                       required
                     />
                   </div>
@@ -944,6 +1036,7 @@ export default function InventoryPage() {
                     label="Plat Nomor"
                     value={editForm.plateNumber}
                     onChange={(e) => setEditForm({ ...editForm, plateNumber: e.target.value })}
+                    placeholder="Contoh: B 1234 ABC"
                     required
                   />
                   <Input
@@ -951,12 +1044,14 @@ export default function InventoryPage() {
                     type="number"
                     value={editForm.mileage}
                     onChange={(e) => setEditForm({ ...editForm, mileage: e.target.value })}
+                    placeholder="Masukkan kilometer saat ini"
                     required
                   />
                   <Input
                     label="Kapasitas Mesin"
                     value={editForm.engineCapacity}
                     onChange={(e) => setEditForm({ ...editForm, engineCapacity: e.target.value })}
+                    placeholder="Contoh: 1.3L, 1.5L, 2.0L"
                     required
                   />
                   <div className="grid grid-cols-2 gap-3">
@@ -965,6 +1060,7 @@ export default function InventoryPage() {
                       type="number"
                       value={editForm.seats}
                       onChange={(e) => setEditForm({ ...editForm, seats: e.target.value })}
+                      placeholder="5"
                       min="2"
                       max="8"
                       required
@@ -974,6 +1070,7 @@ export default function InventoryPage() {
                       type="number"
                       value={editForm.doors}
                       onChange={(e) => setEditForm({ ...editForm, doors: e.target.value })}
+                      placeholder="4"
                       min="2"
                       max="5"
                       required
@@ -1006,8 +1103,27 @@ export default function InventoryPage() {
                     label="VIN Number"
                     value={editForm.vin}
                     onChange={(e) => setEditForm({ ...editForm, vin: e.target.value })}
+                    placeholder="Masukkan nomor VIN kendaraan"
                     required
                   />
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Data STNK</h4>
+                    <div className="space-y-3">
+                      <Input
+                        label="Nomor STNK"
+                        value={editForm.stnkNumber}
+                        onChange={(e) => setEditForm({ ...editForm, stnkNumber: e.target.value })}
+                        placeholder="Masukkan nomor STNK"
+                      />
+                      <Input
+                        label="Tanggal Expired STNK"
+                        type="date"
+                        value={editForm.stnkExpiredDate}
+                        onChange={(e) => setEditForm({ ...editForm, stnkExpiredDate: e.target.value })}
+                        placeholder="Pilih tanggal expired"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -1018,12 +1134,14 @@ export default function InventoryPage() {
                     label="Harga Beli"
                     value={editForm.purchasePrice}
                     onChange={(e) => setEditForm({ ...editForm, purchasePrice: e.target.value })}
+                    placeholder="Masukkan harga beli mobil"
                     required
                   />
                   <CurrencyInput
                     label="Harga Jual"
                     value={editForm.sellingPrice}
                     onChange={(e) => setEditForm({ ...editForm, sellingPrice: e.target.value })}
+                    placeholder="Masukkan harga jual yang diinginkan"
                     required
                   />
                   <Select
@@ -1041,6 +1159,7 @@ export default function InventoryPage() {
                     label="Deskripsi"
                     value={editForm.description}
                     onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    placeholder="Tuliskan kondisi mobil, riwayat perawatan, fitur unggulan, dan informasi penting lainnya..."
                     rows={4}
                   />
                   
@@ -1059,7 +1178,7 @@ export default function InventoryPage() {
                       />
                       
                       {/* Photo Preview Grid */}
-                      {editForm.photos.length > 0 && (
+                      {editForm.photos.length > 0 ? (
                         <div className="grid grid-cols-3 gap-2">
                           {editForm.photos.map((photo, index) => (
                             <div key={index} className="relative group">
@@ -1077,6 +1196,14 @@ export default function InventoryPage() {
                               </button>
                             </div>
                           ))}
+                        </div>
+                      ) : (
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
+                          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="mt-2 text-sm text-gray-600 font-medium">Belum ada foto yang dipilih</p>
+                          <p className="mt-1 text-xs text-gray-500">Klik tombol "Choose Files" di atas untuk mengunggah foto</p>
                         </div>
                       )}
                       
@@ -1129,7 +1256,7 @@ export default function InventoryPage() {
               label="Deskripsi Perawatan"
               value={maintenanceForm.description}
               onChange={(e) => setMaintenanceForm({ ...maintenanceForm, description: e.target.value })}
-              placeholder="Ganti oli, service berkala, perbaikan rem, dll."
+              placeholder="Contoh: Ganti oli, service berkala, perbaikan rem, ganti ban"
               required
             />
             
@@ -1137,7 +1264,7 @@ export default function InventoryPage() {
               label="Biaya"
               value={maintenanceForm.cost}
               onChange={(e) => setMaintenanceForm({ ...maintenanceForm, cost: e.target.value })}
-              placeholder="500000"
+              placeholder="Masukkan total biaya perawatan"
               required
             />
             
@@ -1146,14 +1273,18 @@ export default function InventoryPage() {
               type="date"
               value={maintenanceForm.date}
               onChange={(e) => setMaintenanceForm({ ...maintenanceForm, date: e.target.value })}
+              placeholder="Pilih tanggal perawatan"
               required
             />
             
-            <Input
+            <Select
               label="Vendor/Bengkel"
               value={maintenanceForm.vendor}
               onChange={(e) => setMaintenanceForm({ ...maintenanceForm, vendor: e.target.value })}
-              placeholder="Nama bengkel atau vendor (opsional)"
+              options={[
+                { value: '', label: 'Pilih vendor/bengkel (opsional)' },
+                ...vendors.map(v => ({ value: v.name, label: v.name }))
+              ]}
             />
             
             {/* Current maintenance history */}

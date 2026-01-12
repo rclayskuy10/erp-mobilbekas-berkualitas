@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
@@ -38,6 +39,9 @@ import {
 
 export default function SalesPage() {
   const { hasPermission, user } = useAuth();
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+  
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -45,6 +49,25 @@ export default function SalesPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+  // Handle highlight from notification
+  useEffect(() => {
+    if (highlightId) {
+      const sale = sales.find(s => s.id === highlightId);
+      if (sale) {
+        setHighlightedId(highlightId);
+        // Auto open view modal for highlighted sale
+        setSelectedSale(sale);
+        setIsViewModalOpen(true);
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          setHighlightedId(null);
+        }, 3000);
+      }
+    }
+  }, [highlightId, sales]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -461,8 +484,14 @@ export default function SalesPage() {
                   {filteredSales.map((sale) => {
                     const car = cars.find((c) => c.id === sale.carId);
                     const profit = car ? sale.sellingPrice - car.hpp : 0;
+                    const isHighlighted = highlightedId === sale.id;
                     return (
-                      <tr key={sale.id} className="hover:bg-gray-50">
+                      <tr 
+                        key={sale.id} 
+                        className={`hover:bg-gray-50 transition-all ${
+                          isHighlighted ? 'bg-blue-100 animate-pulse' : ''
+                        }`}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="font-medium text-blue-600">{sale.saleNumber}</span>
                         </td>
@@ -553,8 +582,24 @@ export default function SalesPage() {
             </div>
 
             {filteredSales.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Tidak ada penjualan ditemukan</p>
+              <div className="text-center py-16">
+                <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Tidak ada data penjualan
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  {searchQuery || statusFilter !== 'all' 
+                    ? 'Tidak ada penjualan yang sesuai dengan filter Anda'
+                    : 'Belum ada transaksi penjualan. Mulai dengan membuat penjualan baru.'}
+                </p>
+                {hasPermission('sales', 'create') && !searchQuery && statusFilter === 'all' && (
+                  <Button
+                    onClick={() => setIsAddModalOpen(true)}
+                    leftIcon={<Plus className="h-4 w-4" />}
+                  >
+                    Buat Penjualan Pertama
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -744,12 +789,14 @@ export default function SalesPage() {
                   label="Nama Customer"
                   value={formData.customerName}
                   onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                  placeholder="Masukkan nama lengkap customer"
                   required
                 />
                 <Input
                   label="No. Telepon"
                   value={formData.customerPhone}
                   onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                  placeholder="Contoh: 08123456789"
                   required
                 />
                 <Input
@@ -757,11 +804,13 @@ export default function SalesPage() {
                   type="email"
                   value={formData.customerEmail}
                   onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
+                  placeholder="contoh@email.com"
                 />
                 <Input
                   label="Alamat"
                   value={formData.customerAddress}
                   onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
+                  placeholder="Alamat lengkap customer"
                 />
               </div>
             </div>
@@ -781,6 +830,7 @@ export default function SalesPage() {
                   label="Harga Jual"
                   value={formData.sellingPrice}
                   onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
+                  placeholder="Masukkan harga jual"
                   required
                 />
                 <Select
@@ -799,6 +849,7 @@ export default function SalesPage() {
                     label="Uang Muka (DP)"
                     value={formData.downPayment}
                     onChange={(e) => setFormData({ ...formData, downPayment: e.target.value })}
+                    placeholder="Masukkan jumlah uang muka"
                   />
                 )}
               </div>
@@ -807,6 +858,7 @@ export default function SalesPage() {
                   label="Catatan"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Tambahkan catatan atau informasi tambahan (opsional)"
                 />
               </div>
             </div>

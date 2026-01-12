@@ -16,6 +16,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ERP Showroom - Sistem ERP Showroom Mobil",
   description: "Sistem ERP internal untuk pengelolaan bisnis jual beli mobil bekas",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ERP Showroom",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    title: "ERP Showroom - Sistem ERP Showroom Mobil",
+    description: "Sistem ERP internal untuk pengelolaan bisnis jual beli mobil bekas",
+    siteName: "ERP Showroom",
+  },
 };
 
 export const viewport: Viewport = {
@@ -23,6 +38,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: '#2563EB',
 };
 
 export default function RootLayout({
@@ -32,6 +48,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
+      <head>
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="ERP Showroom" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="msapplication-TileColor" content="#2563EB" />
+        <meta name="msapplication-tap-highlight" content="no" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
