@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
@@ -37,7 +37,7 @@ import {
   Printer,
 } from 'lucide-react';
 
-export default function SalesPage() {
+function SalesContent() {
   const { hasPermission, user } = useAuth();
   const searchParams = useSearchParams();
   const highlightId = searchParams.get('highlight');
@@ -897,5 +897,13 @@ export default function SalesPage() {
         </Modal>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+export default function SalesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-600">Loading...</div></div>}>
+      <SalesContent />
+    </Suspense>
   );
 }
