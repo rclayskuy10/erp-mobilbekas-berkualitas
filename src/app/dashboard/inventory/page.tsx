@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import CurrencyInput from '@/components/ui/CurrencyInput';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import SearchInput from '@/components/ui/SearchInput';
@@ -107,7 +108,7 @@ export default function InventoryPage() {
       const matchesStatus = statusFilter === 'all' || car.status === statusFilter;
       
       return matchesSearch && matchesStatus;
-    });
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [cars, searchQuery, statusFilter]);
 
   const getStatusBadgeVariant = (status: string) => {
@@ -257,7 +258,7 @@ export default function InventoryPage() {
       updatedAt: new Date().toISOString(),
     };
 
-    setCars([...cars, newCar]);
+    setCars([newCar, ...cars]);
     setIsAddModalOpen(false);
     
     // Reset form
@@ -797,17 +798,15 @@ export default function InventoryPage() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Harga & Kondisi</h3>
                 <div className="space-y-4">
-                  <Input
-                    label="Harga Beli (Rp)"
-                    type="number"
+                  <CurrencyInput
+                    label="Harga Beli"
                     value={carForm.purchasePrice}
                     onChange={(e) => setCarForm({ ...carForm, purchasePrice: e.target.value })}
                     placeholder="150000000"
                     required
                   />
-                  <Input
-                    label="Harga Jual (Rp)"
-                    type="number"
+                  <CurrencyInput
+                    label="Harga Jual"
                     value={carForm.sellingPrice}
                     onChange={(e) => setCarForm({ ...carForm, sellingPrice: e.target.value })}
                     placeholder="165000000"
@@ -1015,16 +1014,14 @@ export default function InventoryPage() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Harga & Kondisi</h3>
                 <div className="space-y-4">
-                  <Input
-                    label="Harga Beli (Rp)"
-                    type="number"
+                  <CurrencyInput
+                    label="Harga Beli"
                     value={editForm.purchasePrice}
                     onChange={(e) => setEditForm({ ...editForm, purchasePrice: e.target.value })}
                     required
                   />
-                  <Input
-                    label="Harga Jual (Rp)"
-                    type="number"
+                  <CurrencyInput
+                    label="Harga Jual"
                     value={editForm.sellingPrice}
                     onChange={(e) => setEditForm({ ...editForm, sellingPrice: e.target.value })}
                     required
@@ -1136,9 +1133,8 @@ export default function InventoryPage() {
               required
             />
             
-            <Input
-              label="Biaya (Rp)"
-              type="number"
+            <CurrencyInput
+              label="Biaya"
               value={maintenanceForm.cost}
               onChange={(e) => setMaintenanceForm({ ...maintenanceForm, cost: e.target.value })}
               placeholder="500000"

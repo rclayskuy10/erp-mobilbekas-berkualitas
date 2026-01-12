@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex h-16 items-center justify-between px-4 border-b border-slate-700">
             <Link href="/dashboard" className="flex items-center gap-2">
               <Car className="h-8 w-8 text-blue-500" />
-              <span className="text-xl font-bold text-white">MobilERP</span>
+              <span className="text-xl font-bold text-white">ERP Showroom</span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -124,7 +124,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <div className="hidden lg:block">
             <h1 className="text-lg font-semibold text-gray-900">
-              Sistem ERP Mobil Bekas
+              Sistem ERP Showroom Mobil
             </h1>
           </div>
 
@@ -181,7 +181,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Footer */}
         <footer className="border-t border-gray-200 bg-white px-4 py-4">
           <div className="text-center text-sm text-gray-500">
-            <p>&copy; {new Date().getFullYear()} MobilERP. Sistem Internal - Tidak untuk publik.</p>
+            <p>&copy; {new Date().getFullYear()} ERP Showroom. Sistem Internal - Tidak untuk publik.</p>
           </div>
         </footer>
       </div>

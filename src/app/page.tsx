@@ -35,7 +35,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Car className="h-8 w-8 text-blue-400" />
-              <span className="text-2xl font-bold text-white">MobilERP</span>
+              <span className="text-2xl font-bold text-white">ERP Showroom</span>
             </div>
             <Link
               href="/login"
@@ -124,7 +124,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-white/10 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400">
-          <p>&copy; {new Date().getFullYear()} MobilERP. Sistem Internal - Tidak untuk publik.</p>
+          <p>&copy; {new Date().getFullYear()} ERP Showroom. Sistem Internal - Tidak untuk publik.</p>
         </div>
       </footer>
     </div>

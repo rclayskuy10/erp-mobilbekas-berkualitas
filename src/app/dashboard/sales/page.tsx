@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import CurrencyInput from '@/components/ui/CurrencyInput';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import SearchInput from '@/components/ui/SearchInput';
@@ -75,7 +76,7 @@ export default function SalesPage() {
       const matchesStatus = statusFilter === 'all' || sale.status === statusFilter;
       
       return matchesSearch && matchesStatus;
-    });
+    }).sort((a, b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime());
   }, [sales, searchQuery, statusFilter]);
 
   // Stats
@@ -147,7 +148,7 @@ export default function SalesPage() {
       notes: formData.notes,
       createdAt: new Date().toISOString(),
     };
-    setSales([...sales, newSale]);
+    setSales([newSale, ...sales]);
     setIsAddModalOpen(false);
     setFormData({
       carId: '',
@@ -228,7 +229,7 @@ export default function SalesPage() {
         <div class="invoice-container">
           <div class="header">
             <div class="company-info">
-              <h1>🚗 MobilERP</h1>
+              <h1>🚗 ERP Showroom</h1>
               <p>Showroom Mobil Bekas Berkualitas</p>
               <p>Jl. Otomotif No. 123, Jakarta</p>
               <p>Telp: (021) 1234-5678</p>
@@ -318,7 +319,7 @@ export default function SalesPage() {
           <div class="footer">
             <p>Terima kasih atas kepercayaan Anda!</p>
             <p style="margin-top: 5px;">Invoice ini dicetak pada ${new Date().toLocaleString('id-ID')}</p>
-            <p style="margin-top: 10px;">MobilERP - Sistem Manajemen Showroom Mobil</p>
+            <p style="margin-top: 10px;">ERP Showroom - Sistem Manajemen Showroom Mobil</p>
           </div>
         </div>
 
@@ -776,9 +777,8 @@ export default function SalesPage() {
                   onChange={(e) => setFormData({ ...formData, saleDate: e.target.value })}
                   required
                 />
-                <Input
-                  label="Harga Jual (Rp)"
-                  type="number"
+                <CurrencyInput
+                  label="Harga Jual"
                   value={formData.sellingPrice}
                   onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
                   required
@@ -795,9 +795,8 @@ export default function SalesPage() {
                   ]}
                 />
                 {(formData.paymentMethod === 'credit' || formData.paymentMethod === 'leasing') && (
-                  <Input
+                  <CurrencyInput
                     label="Uang Muka (DP)"
-                    type="number"
                     value={formData.downPayment}
                     onChange={(e) => setFormData({ ...formData, downPayment: e.target.value })}
                   />

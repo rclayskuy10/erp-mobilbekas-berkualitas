@@ -61,7 +61,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
             <Car className="h-10 w-10 text-blue-400" />
-            <span className="text-3xl font-bold text-white">MobilERP</span>
+            <span className="text-3xl font-bold text-white">ERP Showroom</span>
           </Link>
           <p className="mt-2 text-gray-400">Masuk ke sistem</p>
         </div>

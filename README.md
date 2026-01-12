@@ -1,4 +1,4 @@
-# MobilERP - Sistem ERP Mobil Bekas
+# ERP Showroom - Sistem ERP Showroom Mobil
 
 Sistem ERP internal untuk pengelolaan bisnis jual beli mobil bekas dengan fitur multi user, RBAC, inventory, pembelian, penjualan, dan laporan laba rugi.
 

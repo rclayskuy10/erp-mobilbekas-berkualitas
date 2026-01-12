@@ -46,7 +46,7 @@ export default function UsersPage() {
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  });
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Stats
   const activeUsers = users.filter((u) => u.isActive).length;
@@ -65,7 +65,7 @@ export default function UsersPage() {
       createdAt: new Date().toISOString(),
       isActive: true,
     };
-    setUsers([...users, newUser]);
+    setUsers([newUser, ...users]);
     setIsAddModalOpen(false);
     setFormData({ name: '', email: '', password: '', role: 'staff' });
   };

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MobilERP - Sistem ERP Mobil Bekas",
+  title: "ERP Showroom - Sistem ERP Showroom Mobil",
   description: "Sistem ERP internal untuk pengelolaan bisnis jual beli mobil bekas",
 };
 

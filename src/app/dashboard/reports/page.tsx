@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import CurrencyInput from '@/components/ui/CurrencyInput';
 import Select from '@/components/ui/Select';
 import { useAuth } from '@/contexts/AuthContext';
 import { cars, sales, expenses as initialExpenses } from '@/data/dummy';
@@ -124,7 +125,7 @@ export default function ReportsPage() {
       date: expenseForm.date,
       createdBy: 'System',
     };
-    setExpenses([...expenses, newExpense]);
+    setExpenses([newExpense, ...expenses]);
     setIsAddExpenseModalOpen(false);
     setExpenseForm({
       category: '',
@@ -390,105 +391,177 @@ export default function ReportsPage() {
 
           {/* Charts Row */}
           <div className="grid lg:grid-cols-2 gap-6">
-            {/* Enhanced Monthly Profit Chart */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Analisis Profit & Tren Bulanan
-              </h2>
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                    <defs>
-                      <linearGradient id="grossProfitGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0.05}/>
-                      </linearGradient>
-                      <linearGradient id="netProfitGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis 
-                      dataKey="month" 
-                      tick={{ fontSize: 12, fill: '#64748b' }}
-                      tickLine={false}
-                      axisLine={{ stroke: '#e2e8f0' }}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 12, fill: '#64748b' }}
-                      tickLine={false}
-                      axisLine={{ stroke: '#e2e8f0' }}
-                      tickFormatter={(value) =>
-                        `${(value / 1000000).toFixed(0)}jt`
-                      }
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '12px',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                        fontSize: '14px'
-                      }}
-                      formatter={(value) => formatCurrency(Number(value))}
-                      labelStyle={{ color: '#1f2937', fontWeight: 'bold' }}
-                    />
-                    <Legend 
-                      wrapperStyle={{ paddingTop: '20px' }}
-                      iconType="circle"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="grossProfit"
-                      stroke="#22c55e"
-                      strokeWidth={3}
-                      fill="url(#grossProfitGradient)"
-                      name="Gross Profit"
-                      dot={{ fill: '#22c55e', r: 4 }}
-                      activeDot={{ r: 6, stroke: '#22c55e', strokeWidth: 2 }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="netProfit"
-                      stroke="#3b82f6"
-                      strokeWidth={3}
-                      fill="url(#netProfitGradient)"
-                      name="Net Profit"
-                      dot={{ fill: '#3b82f6', r: 4 }}
-                      activeDot={{ r: 6, stroke: '#3b82f6', strokeWidth: 2 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-              {/* Trend indicators */}
-              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
-                <div className="text-center">
-                  <p className="text-sm text-gray-500">Gross Profit YTD</p>
-                  <p className="text-lg font-semibold text-green-600">{formatCurrency(grossProfit)}</p>
+            {/* Professional Profit Trend Chart */}
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                      Trend Profitabilitas Bulanan
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      Periode: Juni - Desember 2025
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs font-medium">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-sm bg-emerald-500"></div>
+                      <span className="text-gray-600">Gross Profit</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3 h-3 rounded-sm bg-blue-500"></div>
+                      <span className="text-gray-600">Net Profit</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-sm text-gray-500">Net Profit YTD</p>
-                  <p className={`text-lg font-semibold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    {formatCurrency(netProfit)}
-                  </p>
+              </div>
+
+              {/* Chart */}
+              <div className="px-6 py-5">
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={monthlyData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="grossProfitGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" stopOpacity={0.2}/>
+                          <stop offset="100%" stopColor="#10b981" stopOpacity={0.02}/>
+                        </linearGradient>
+                        <linearGradient id="netProfitGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.02}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        stroke="#e5e7eb" 
+                        vertical={false}
+                        strokeOpacity={0.5}
+                      />
+                      <XAxis 
+                        dataKey="month" 
+                        tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 500 }}
+                        tickLine={false}
+                        axisLine={{ stroke: '#d1d5db', strokeWidth: 1.5 }}
+                        dy={8}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 500 }}
+                        tickLine={false}
+                        axisLine={{ stroke: '#d1d5db', strokeWidth: 1.5 }}
+                        tickFormatter={(value) => `${value >= 0 ? '' : '-'}Rp ${Math.abs(value / 1000000)}jt`}
+                        width={70}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#ffffff',
+                          border: 'none',
+                          borderRadius: '10px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                          padding: '12px 16px',
+                          fontSize: '13px'
+                        }}
+                        formatter={(value: any) => [formatCurrency(Number(value)), '']}
+                        labelStyle={{ 
+                          color: '#111827', 
+                          fontWeight: 600,
+                          fontSize: '13px',
+                          marginBottom: '4px'
+                        }}
+                        itemStyle={{ 
+                          color: '#6b7280',
+                          padding: '2px 0',
+                          fontWeight: 500
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="grossProfit"
+                        stroke="#10b981"
+                        strokeWidth={2.5}
+                        fill="url(#grossProfitGradient)"
+                        name="Gross Profit"
+                        dot={{ fill: '#10b981', r: 3, strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="netProfit"
+                        stroke="#3b82f6"
+                        strokeWidth={2.5}
+                        fill="url(#netProfitGradient)"
+                        name="Net Profit"
+                        dot={{ fill: '#3b82f6', r: 3, strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff' }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Professional Summary Cards */}
+              <div className="px-6 pb-5">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Gross Profit Card */}
+                  <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-100 shadow-sm">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="p-2 bg-white rounded-lg shadow-sm">
+                        <TrendingUp className="h-4 w-4 text-emerald-600" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-1">
+                        Gross Profit YTD
+                      </p>
+                      <p className="text-xl font-bold text-emerald-900 tracking-tight">
+                        {formatCurrency(grossProfit)}
+                      </p>
+                      <p className="text-xs text-emerald-600 mt-1 font-medium">
+                        Margin: {profitMargin}%
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Net Profit Card */}
+                  <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-blue-50 to-indigo-50 border-blue-100' : 'from-red-50 to-rose-50 border-red-100'} rounded-lg p-4 border shadow-sm`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="p-2 bg-white rounded-lg shadow-sm">
+                        {netProfit >= 0 ? (
+                          <TrendingUp className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4 text-red-600" />
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <p className={`text-xs font-semibold ${netProfit >= 0 ? 'text-blue-700' : 'text-red-700'} uppercase tracking-wide mb-1`}>
+                        Net Profit YTD
+                      </p>
+                      <p className={`text-xl font-bold ${netProfit >= 0 ? 'text-blue-900' : 'text-red-900'} tracking-tight`}>
+                        {formatCurrency(netProfit)}
+                      </p>
+                      <p className={`text-xs ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'} mt-1 font-medium`}>
+                        Margin: {netMargin}%
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Expense Breakdown */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {/* Compact Expense Breakdown */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">
                 Breakdown Biaya Operasional
               </h2>
-              <div className="h-72">
+              <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={expensesByCategory}
                       cx="50%"
                       cy="50%"
-                      outerRadius={80}
+                      outerRadius={60}
                       dataKey="value"
                       label={({ name, percent }) =>
                         `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
@@ -505,127 +578,203 @@ export default function ReportsPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex flex-wrap justify-center gap-4 mt-4">
+              <div className="flex flex-wrap justify-center gap-2 mt-3">
                 {expensesByCategory.map((item, index) => (
-                  <div key={item.name} className="flex items-center gap-2">
+                  <div key={item.name} className="flex items-center gap-1.5">
                     <div
-                      className="w-3 h-3 rounded-full"
+                      className="w-2.5 h-2.5 rounded-full"
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
-                    <span className="text-sm text-gray-600">{item.name}</span>
+                    <span className="text-xs text-gray-600">{item.name}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Enhanced Revenue vs Cost Chart */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">
-              Analisis Pendapatan vs Biaya Bulanan
-            </h2>
-            <div className="h-64 sm:h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData} margin={{ top: 20, right: 10, left: 10, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="pendapatanGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.6}/>
-                    </linearGradient>
-                    <linearGradient id="hppGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0.6}/>
-                    </linearGradient>
-                    <linearGradient id="biayaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.9}/>
-                      <stop offset="95%" stopColor="#f97316" stopOpacity={0.6}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis 
-                    dataKey="month" 
-                    tick={{ fontSize: 10, fill: '#64748b' }}
-                    tickLine={false}
-                    axisLine={{ stroke: '#e2e8f0' }}
-                    interval={0}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 10, fill: '#64748b' }}
-                    tickLine={false}
-                    axisLine={{ stroke: '#e2e8f0' }}
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(0)}jt`}
-                    width={40}
-                  />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '12px',
-                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                      fontSize: '12px'
-                    }}
-                    formatter={(value) => formatCurrency(Number(value))} 
-                    labelStyle={{ color: '#1f2937', fontWeight: 'bold' }}
-                  />
-                  <Legend 
-                    wrapperStyle={{ paddingTop: '10px' }}
-                    iconType="rect"
-                    layout="horizontal"
-                    align="center"
-                    formatter={(value) => <span style={{ color: '#374151', fontSize: '12px', marginRight: '16px' }}>{value}</span>}
-                  />
-                  <Bar 
-                    dataKey="biaya" 
-                    fill="url(#biayaGrad)" 
-                    name="Biaya Operasional"
-                    radius={[4, 4, 0, 0]}
-                    barSize={40}
-                  />
-                  <Bar 
-                    dataKey="hpp" 
-                    fill="url(#hppGrad)" 
-                    name="HPP"
-                    radius={[4, 4, 0, 0]}
-                    barSize={40}
-                  />
-                  <Bar 
-                    dataKey="pendapatan" 
-                    fill="url(#pendapatanGrad)" 
-                    name="Pendapatan"
-                    radius={[4, 4, 0, 0]}
-                    barSize={40}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+          {/* Professional Revenue vs Cost Analysis */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+            {/* Header Section */}
+            <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                    Analisis Pendapatan vs Biaya Bulanan
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Perbandingan pendapatan, HPP, dan biaya operasional
+                  </p>
+                </div>
+                <div className="hidden sm:flex items-center gap-4 text-xs font-medium">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                    <span className="text-gray-600">Pendapatan</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-rose-500"></div>
+                    <span className="text-gray-600">HPP</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded bg-orange-500"></div>
+                    <span className="text-gray-600">Biaya Operasional</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            {/* Financial metrics summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-100">
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded bg-blue-500"></div>
-                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Rata-rata Pendapatan</p>
-                </div>
-                <p className="text-sm sm:text-lg font-bold text-blue-600 break-all">
-                  {formatCurrency(monthlyData.reduce((sum, d) => sum + d.pendapatan, 0) / monthlyData.filter(d => d.pendapatan > 0).length || 0)}
-                </p>
+
+            {/* Chart Section */}
+            <div className="px-6 py-5">
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -15, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="pendapatanGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.95}/>
+                        <stop offset="100%" stopColor="#2563eb" stopOpacity={0.85}/>
+                      </linearGradient>
+                      <linearGradient id="hppGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.95}/>
+                        <stop offset="100%" stopColor="#e11d48" stopOpacity={0.85}/>
+                      </linearGradient>
+                      <linearGradient id="biayaGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#fb923c" stopOpacity={0.95}/>
+                        <stop offset="100%" stopColor="#f97316" stopOpacity={0.85}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid 
+                      strokeDasharray="3 3" 
+                      stroke="#e5e7eb" 
+                      vertical={false}
+                      strokeOpacity={0.5}
+                    />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 500 }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#d1d5db', strokeWidth: 1.5 }}
+                      interval={0}
+                      dy={8}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 500 }}
+                      tickLine={false}
+                      axisLine={{ stroke: '#d1d5db', strokeWidth: 1.5 }}
+                      tickFormatter={(value) => `Rp ${(value / 1000000).toFixed(0)}jt`}
+                      width={70}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: 'none',
+                        borderRadius: '10px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                        padding: '12px 16px',
+                        fontSize: '13px'
+                      }}
+                      formatter={(value: any) => [formatCurrency(Number(value)), '']}
+                      labelStyle={{ 
+                        color: '#111827', 
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        marginBottom: '4px'
+                      }}
+                      itemStyle={{ 
+                        color: '#6b7280',
+                        padding: '2px 0',
+                        fontWeight: 500
+                      }}
+                    />
+                    <Bar 
+                      dataKey="pendapatan" 
+                      fill="url(#pendapatanGrad)" 
+                      name="Pendapatan"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={45}
+                    />
+                    <Bar 
+                      dataKey="hpp" 
+                      fill="url(#hppGrad)" 
+                      name="HPP"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={45}
+                    />
+                    <Bar 
+                      dataKey="biaya" 
+                      fill="url(#biayaGrad)" 
+                      name="Biaya Operasional"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={45}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-              <div className="text-center p-3 bg-red-50 rounded-lg">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded bg-red-500"></div>
-                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Rata-rata HPP</p>
+            </div>
+
+            {/* Professional KPI Cards */}
+            <div className="px-6 pb-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Rata-rata Pendapatan Card */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 bg-white rounded-lg shadow-sm">
+                      <DollarSign className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1.5">
+                      Rata-rata Pendapatan
+                    </p>
+                    <p className="text-xl font-bold text-blue-900 tracking-tight">
+                      {formatCurrency(monthlyData.reduce((sum, d) => sum + d.pendapatan, 0) / monthlyData.filter(d => d.pendapatan > 0).length || 0)}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-2 font-medium">
+                      Per bulan aktif
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm sm:text-lg font-bold text-red-600 break-all">
-                  {formatCurrency(monthlyData.reduce((sum, d) => sum + d.hpp, 0) / monthlyData.filter(d => d.hpp > 0).length || 0)}
-                </p>
-              </div>
-              <div className="text-center p-3 bg-orange-50 rounded-lg">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded bg-orange-500"></div>
-                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Rata-rata Biaya</p>
+
+                {/* Rata-rata HPP Card */}
+                <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-5 border border-rose-100 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 bg-white rounded-lg shadow-sm">
+                      <TrendingDown className="h-5 w-5 text-rose-600" />
+                    </div>
+                    <div className="w-3 h-3 rounded bg-rose-500"></div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-rose-700 uppercase tracking-wide mb-1.5">
+                      Rata-rata HPP
+                    </p>
+                    <p className="text-xl font-bold text-rose-900 tracking-tight">
+                      {formatCurrency(monthlyData.reduce((sum, d) => sum + d.hpp, 0) / monthlyData.filter(d => d.hpp > 0).length || 0)}
+                    </p>
+                    <p className="text-xs text-rose-600 mt-2 font-medium">
+                      Harga pokok penjualan
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm sm:text-lg font-bold text-orange-600 break-all">
-                  {formatCurrency(monthlyData.reduce((sum, d) => sum + d.biaya, 0) / monthlyData.length)}
-                </p>
+
+                {/* Rata-rata Biaya Card */}
+                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-5 border border-orange-100 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2.5 bg-white rounded-lg shadow-sm">
+                      <Wallet className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div className="w-3 h-3 rounded bg-orange-500"></div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-1.5">
+                      Rata-rata Biaya
+                    </p>
+                    <p className="text-xl font-bold text-orange-900 tracking-tight">
+                      {formatCurrency(monthlyData.reduce((sum, d) => sum + d.biaya, 0) / monthlyData.length)}
+                    </p>
+                    <p className="text-xs text-orange-600 mt-2 font-medium">
+                      Biaya operasional bulanan
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -769,7 +918,7 @@ export default function ReportsPage() {
               {/* Mobile Card Layout */}
               <div className="block sm:hidden">
                 <div className="space-y-3 max-h-80 overflow-y-auto">
-                  {expenses.map((expense) => (
+                  {[...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense) => (
                     <div key={expense.id} className="bg-gray-50 rounded-lg p-3 space-y-2">
                       <div className="flex justify-between items-start">
                         <div className="flex-1 min-w-0">
@@ -823,7 +972,7 @@ export default function ReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {expenses.map((expense) => (
+                      {[...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense) => (
                         <tr key={expense.id} className="border-b border-gray-50">
                           <td className="py-3 px-2 text-sm text-gray-600">
                             {expense.date}
@@ -917,9 +1066,8 @@ export default function ReportsPage() {
               onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
               required
             />
-            <Input
-              label="Jumlah (Rp)"
-              type="number"
+            <CurrencyInput
+              label="Jumlah"
               value={expenseForm.amount}
               onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
               required

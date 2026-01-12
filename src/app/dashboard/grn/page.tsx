@@ -6,6 +6,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import CurrencyInput from '@/components/ui/CurrencyInput';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import SearchInput from '@/components/ui/SearchInput';
@@ -54,7 +55,7 @@ export default function GRNPage() {
         car?.specs.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
         car?.specs.model.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
-    });
+    }).sort((a, b) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime());
   }, [grns, searchQuery]);
 
   // Stats
@@ -99,7 +100,7 @@ export default function GRNPage() {
       receivedBy: user?.name || '',
       createdAt: new Date().toISOString(),
     };
-    setGrns([...grns, newGrn]);
+    setGrns([newGrn, ...grns]);
     setIsAddModalOpen(false);
     // Reset form
     setFormData({
@@ -500,9 +501,8 @@ export default function GRNPage() {
                   onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
                   required
                 />
-                <Input
-                  label="Harga Beli (Rp)"
-                  type="number"
+                <CurrencyInput
+                  label="Harga Beli"
                   value={formData.purchasePrice}
                   onChange={(e) => setFormData({ ...formData, purchasePrice: e.target.value })}
                   required
