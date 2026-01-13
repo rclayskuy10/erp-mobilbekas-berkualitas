@@ -190,7 +190,6 @@ function NotificationsContent() {
                   Hapus Semua
                 </Button>
               )}
-              </div>
             </div>
           </div>
 
@@ -217,7 +216,6 @@ function NotificationsContent() {
                 {notifications.filter(n => n.isRead).length}
               </p>
             </div>
-          </div>
           </div>
 
           {/* Filters */}
