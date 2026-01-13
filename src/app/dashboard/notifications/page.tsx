@@ -196,25 +196,26 @@ function NotificationsContent() {
           {/* Stats */}
           <div className="mb-6 sm:mb-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            <div className="bg-white rounded-xl p-4 border border-gray-100">
-              <p className="text-sm text-gray-500">Total Notifikasi</p>
-              <p className="text-2xl font-bold text-gray-900">{notifications.length}</p>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-100">
-              <p className="text-sm text-gray-500">Belum Dibaca</p>
-              <p className="text-2xl font-bold text-red-600">{unreadCount}</p>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-100">
-              <p className="text-sm text-gray-500">Prioritas Tinggi</p>
-              <p className="text-2xl font-bold text-orange-600">
-                {notifications.filter(n => n.priority === 'high').length}
-              </p>
-            </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-100">
-              <p className="text-sm text-gray-500">Sudah Dibaca</p>
-              <p className="text-2xl font-bold text-green-600">
-                {notifications.filter(n => n.isRead).length}
-              </p>
+              <div className="bg-white rounded-xl p-4 border border-gray-100">
+                <p className="text-sm text-gray-500">Total Notifikasi</p>
+                <p className="text-2xl font-bold text-gray-900">{notifications.length}</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-gray-100">
+                <p className="text-sm text-gray-500">Belum Dibaca</p>
+                <p className="text-2xl font-bold text-red-600">{unreadCount}</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-gray-100">
+                <p className="text-sm text-gray-500">Prioritas Tinggi</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {notifications.filter(n => n.priority === 'high').length}
+                </p>
+              </div>
+              <div className="bg-white rounded-xl p-4 border border-gray-100">
+                <p className="text-sm text-gray-500">Sudah Dibaca</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {notifications.filter(n => n.isRead).length}
+                </p>
+              </div>
             </div>
           </div>
 
