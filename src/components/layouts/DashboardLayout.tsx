@@ -4,7 +4,11 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth, getRoleDisplayName, getRoleBadgeColor } from '@/contexts/AuthContext';
+import { useLoading } from '@/contexts/LoadingContext';
 import NotificationSystem from '@/components/notification/NotificationSystem';
+import NavigationLink from '@/components/ui/NavigationLink';
+import LoadingBar from '@/components/ui/LoadingBar';
+import { DashboardSkeleton, TableSkeleton, FormSkeleton } from '@/components/ui/Skeleton';
 import {
   LayoutDashboard,
   Car,
@@ -38,12 +42,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout, hasPermission } = useAuth();
+  const { isLoading } = useLoading();
   const pathname = usePathname();
+
+  // Determine skeleton type based on current path
+  const getSkeletonComponent = () => {
+    if (pathname === '/dashboard') return <DashboardSkeleton />;
+    if (pathname.includes('/analytics') || pathname.includes('/reports')) return <DashboardSkeleton />;
+    return <TableSkeleton />;
+  };
 
   const filteredMenuItems = menuItems.filter(item => hasPermission(item.module, 'view'));
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <LoadingBar />
+      
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -84,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   : pathname === item.href || pathname.startsWith(item.href + '/');
                 return (
                   <li key={item.name}>
-                    <Link
+                    <NavigationLink
                       href={item.href}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                         isActive
@@ -95,7 +109,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     >
                       <item.icon className="h-4 w-4 sm:h-5 sm:w-5" />
                       <span className="text-sm sm:text-base">{item.name}</span>
-                    </Link>
+                    </NavigationLink>
                   </li>
                 );
               })}
@@ -189,7 +203,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page content */}
-        <main className="pb-16">{children}</main>
+        <main className="pb-16 relative">
+          {isLoading ? (
+            <div className="absolute inset-0 z-10 bg-white">
+              {getSkeletonComponent()}
+            </div>
+          ) : (
+            children
+          )}
+        </main>
 
         {/* Footer */}
         <footer className="border-t border-gray-200 bg-white px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
