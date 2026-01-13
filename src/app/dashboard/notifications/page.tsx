@@ -375,8 +375,6 @@ function NotificationsContent() {
               </div>
             )}
           </div>
-          </div>
-        </div>
         </div>
       </DashboardLayout>
     </ProtectedRoute>
