@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
@@ -23,7 +23,7 @@ import {
   Users,
 } from 'lucide-react';
 
-export default function UsersPage() {
+function UsersContent() {
   const { hasPermission, user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState('');
@@ -144,10 +144,11 @@ export default function UsersPage() {
   return (
     <ProtectedRoute requiredModule="users">
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
               <h1 className="text-2xl font-bold text-gray-900">Manajemen User</h1>
               <p className="text-gray-600">Kelola pengguna dan hak akses sistem</p>
             </div>
@@ -636,7 +637,23 @@ export default function UsersPage() {
             </div>
           </div>
         </Modal>
+        </div>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+export default function UsersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    }>
+      <UsersContent />
+    </Suspense>
   );
 }

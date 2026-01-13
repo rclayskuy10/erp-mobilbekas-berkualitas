@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
@@ -42,7 +42,7 @@ const getPriorityBadge = (priority: string) => {
   return badges[priority] || { variant: 'info', label: priority };
 };
 
-export default function NotificationsPage() {
+function NotificationsContent() {
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [searchQuery, setSearchQuery] = useState('');
@@ -190,11 +190,13 @@ export default function NotificationsPage() {
                   Hapus Semua
                 </Button>
               )}
+              </div>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             <div className="bg-white rounded-xl p-4 border border-gray-100">
               <p className="text-sm text-gray-500">Total Notifikasi</p>
               <p className="text-2xl font-bold text-gray-900">{notifications.length}</p>
@@ -216,9 +218,10 @@ export default function NotificationsPage() {
               </p>
             </div>
           </div>
+          </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-xl p-4 border border-gray-100">
+          <div className="mb-6 sm:mb-8"> className="bg-white rounded-xl p-4 border border-gray-100">
             <div className="flex items-center gap-2 mb-4">
               <Filter className="h-5 w-5 text-gray-500" />
               <h3 className="font-semibold text-gray-900">Filter</h3>
@@ -232,7 +235,7 @@ export default function NotificationsPage() {
               
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
+                onChange={(e) => setStatusFilter(e.target.value as 'all' | 'unread' | 'read')}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="all">Semua Status</option>
@@ -372,8 +375,25 @@ export default function NotificationsPage() {
               </div>
             )}
           </div>
+          </div>
+        </div>
         </div>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+export default function NotificationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    }>
+      <NotificationsContent />
+    </Suspense>
   );
 }

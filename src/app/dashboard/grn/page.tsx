@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
@@ -17,7 +17,7 @@ import { formatCurrency, formatDate, generateId, generateDocNumber } from '@/lib
 import { GRN } from '@/types';
 import { Plus, Eye, Edit, Trash2, Package, FileText } from 'lucide-react';
 
-export default function PembelianPage() {
+function PembelianContent() {
   const { hasPermission, user } = useAuth();
   const [grns, setGrns] = useState<GRN[]>(initialGrns);
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,68 +125,74 @@ export default function PembelianPage() {
   return (
     <ProtectedRoute requiredModule="grn">
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Pembelian Mobil</h1>
-              <p className="text-gray-600">Pencatatan pembelian mobil masuk</p>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Pembelian Mobil</h1>
+                <p className="text-gray-600 mt-2">Pencatatan pembelian mobil masuk</p>
+              </div>
+              {hasPermission('grn', 'create') && (
+                <Button
+                  leftIcon={<Plus className="h-4 w-4" />}
+                  onClick={() => setIsAddModalOpen(true)}
+                >
+                  Buat Pembelian Baru
+                </Button>
+              )}
             </div>
-            {hasPermission('grn', 'create') && (
-              <Button
-                leftIcon={<Plus className="h-4 w-4" />}
-                onClick={() => setIsAddModalOpen(true)}
-              >
-                Buat Pembelian Baru
-              </Button>
-            )}
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl p-6 border border-gray-100">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Total Pembelian</p>
-                  <p className="text-2xl font-bold text-gray-900">{grns.length}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 border border-gray-100">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-100 rounded-lg">
-                  <Package className="h-6 w-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Total Pembelian</p>
-                  <p className="text-xl font-bold text-gray-900">{formatCurrency(totalPurchases)}</p>
+          <div className="mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+              <div className="bg-white rounded-xl p-6 border border-gray-100">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <FileText className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Total Pembelian</p>
+                    <p className="text-2xl font-bold text-gray-900">{grns.length}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="bg-white rounded-xl p-6 border border-gray-100">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <Package className="h-6 w-6 text-purple-600" />
+              <div className="bg-white rounded-xl p-6 border border-gray-100">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-green-100 rounded-lg">
+                    <Package className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Total Pembelian</p>
+                    <p className="text-xl font-bold text-gray-900">{formatCurrency(totalPurchases)}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-500">Bulan Ini</p>
-                  <p className="text-xl font-bold text-gray-900">{formatCurrency(thisMonthTotal)}</p>
+              </div>
+              <div className="bg-white rounded-xl p-6 border border-gray-100">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-purple-100 rounded-lg">
+                    <Package className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Bulan Ini</p>
+                    <p className="text-xl font-bold text-gray-900">{formatCurrency(thisMonthTotal)}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Search */}
-          <div className="flex gap-4">
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Cari nomor pembelian, penjual, atau mobil..."
-              className="max-w-md"
-            />
+          <div className="mb-6 sm:mb-8">
+            <div className="flex gap-4">
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Cari nomor pembelian, penjual, atau mobil..."
+                className="w-full sm:max-w-md"
+              />
+            </div>
           </div>
 
           {/* GRN Table */}
@@ -561,5 +567,20 @@ export default function PembelianPage() {
         </Modal>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+export default function PembelianPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    }>
+      <PembelianContent />
+    </Suspense>
   );
 }

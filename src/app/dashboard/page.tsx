@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
@@ -32,7 +33,7 @@ import {
   Cell,
 } from 'recharts';
 
-export default function DashboardPage() {
+function DashboardContent() {
   // Calculate dashboard stats
   const totalCars = cars.length;
   const availableCars = cars.filter((c) => c.status === 'available').length;
@@ -78,15 +79,15 @@ export default function DashboardPage() {
   return (
     <ProtectedRoute requiredModule="dashboard">
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6">
           {/* Page Header */}
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Dashboard</h1>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
             <p className="text-sm sm:text-base text-gray-600">Selamat datang di sistem ERP Showroom Mobil</p>
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
             <StatCard
               title="Total Mobil"
               value={totalCars}
@@ -116,17 +117,17 @@ export default function DashboardPage() {
           </div>
 
           {/* Enhanced Charts Row */}
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {/* Professional Sales & Revenue Analytics */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
               {/* Header */}
-              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                    <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
                       Analisis Penjualan & Pendapatan
                     </h2>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
                       Total unit terjual per bulan
                     </p>
                   </div>
@@ -138,8 +139,8 @@ export default function DashboardPage() {
               </div>
 
               {/* Chart */}
-              <div className="px-6 py-5">
-                <div className="h-64">
+              <div className="px-4 sm:px-6 py-5">
+                <div className="h-48 sm:h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={monthlySalesData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                       <defs>
@@ -178,7 +179,8 @@ export default function DashboardPage() {
                           padding: '12px 16px',
                           fontSize: '13px'
                         }}
-                        formatter={(value: any, name: any) => {
+                        formatter={(value: number | string | undefined, name: string | undefined) => {
+                          if (!value) return ['0', ''];
                           if (name === 'Jumlah Terjual') return [value + ' unit', ''];
                           return [formatCurrency(Number(value)), ''];
                         }}
@@ -249,26 +251,26 @@ export default function DashboardPage() {
             {/* Professional Inventory Distribution */}
             <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
               {/* Header */}
-              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-                <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
                   Distribusi Inventory
                 </h2>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
                   Status unit mobil
                 </p>
               </div>
 
               {/* Donut Chart */}
-              <div className="px-6 py-5">
-                <div className="h-56">
+              <div className="px-4 sm:px-6 py-5">
+                <div className="h-44 sm:h-56">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={statusData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={45}
-                        outerRadius={75}
+                        innerRadius={35}
+                        outerRadius={60}
                         paddingAngle={3}
                         dataKey="value"
                         label={({value}) => value > 0 ? value : ''}
@@ -293,7 +295,10 @@ export default function DashboardPage() {
                           padding: '12px 16px',
                           fontSize: '13px'
                         }}
-                        formatter={(value: any) => [value + ' unit', '']}
+                        formatter={(value: number | string | undefined) => {
+                          if (!value) return ['0 unit', ''];
+                          return [value + ' unit', ''];
+                        }}
                         labelStyle={{ 
                           color: '#111827', 
                           fontWeight: 600,
@@ -306,7 +311,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Professional Legend Cards */}
-              <div className="px-6 pb-5">
+              <div className="px-4 sm:px-6 pb-5">
                 <div className="grid grid-cols-2 gap-3">
                   {statusData.map((item) => (
                     <div 
@@ -340,8 +345,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Financial Summary */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 lg:p-6">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg shrink-0">
                   <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
@@ -352,7 +357,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 lg:p-6">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-red-100 rounded-lg shrink-0">
                   <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
@@ -363,7 +368,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 lg:p-6">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg shrink-0">
                   <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
@@ -374,7 +379,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 lg:p-6">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg shrink-0">
                   <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
@@ -390,11 +395,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Activities */}
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {/* Recent GRN */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Pembelian Terbaru</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Pembelian Terbaru</h2>
                 <Link
                   href="/dashboard/grn"
                   className="text-sm text-blue-600 hover:text-blue-700"
@@ -434,9 +439,9 @@ export default function DashboardPage() {
             </div>
 
             {/* Recent Sales */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Penjualan Terbaru</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Penjualan Terbaru</h2>
                 <Link
                   href="/dashboard/sales"
                   className="text-sm text-blue-600 hover:text-blue-700"
@@ -514,5 +519,20 @@ export default function DashboardPage() {
         </div>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

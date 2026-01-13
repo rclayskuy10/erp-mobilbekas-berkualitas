@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
@@ -42,7 +42,7 @@ import {
   Cell,
 } from 'recharts';
 
-export default function ReportsPage() {
+function ReportsContent() {
   const { hasPermission } = useAuth();
   const [selectedPeriod, setSelectedPeriod] = useState('all');
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
@@ -1086,13 +1086,14 @@ export default function ReportsPage() {
   return (
     <ProtectedRoute requiredModule="reports">
       <DashboardLayout>
-        <div className="space-y-6 overflow-hidden">
+        <div className="p-4 sm:p-6 lg:p-8 overflow-hidden">
           {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Laporan Keuangan</h1>
-              <p className="text-sm sm:text-base text-gray-600">Analisis profit dan pengeluaran bisnis</p>
-            </div>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Laporan Keuangan</h1>
+                <p className="text-sm sm:text-base text-gray-600 mt-2">Analisis profit dan pengeluaran bisnis</p>
+              </div>
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="secondary"
@@ -1228,11 +1229,13 @@ export default function ReportsPage() {
                   </>
                 )}
               </div>
+              </div>
             </div>
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="bg-white rounded-xl p-4 sm:p-6 border border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -1301,9 +1304,11 @@ export default function ReportsPage() {
               </div>
             </div>
           </div>
+          </div>
 
           {/* Charts Row */}
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="mb-6 sm:mb-8">
+            <div className="grid lg:grid-cols-2 gap-6">
             {/* Professional Profit Trend Chart */}
             <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
               {/* Header */}
@@ -1374,7 +1379,10 @@ export default function ReportsPage() {
                           padding: '12px 16px',
                           fontSize: '13px'
                         }}
-                        formatter={(value: any) => [formatCurrency(Number(value)), '']}
+                        formatter={(value: number | string | undefined) => {
+                          if (!value) return [formatCurrency(0), ''];
+                          return [formatCurrency(Number(value)), ''];
+                        }}
                         labelStyle={{ 
                           color: '#111827', 
                           fontWeight: 600,
@@ -1504,9 +1512,11 @@ export default function ReportsPage() {
               </div>
             </div>
           </div>
+          </div>
 
           {/* Professional Revenue vs Cost Analysis */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+          <div className="mb-6 sm:mb-8">
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             {/* Header Section */}
             <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
               <div className="flex items-center justify-between">
@@ -1584,7 +1594,10 @@ export default function ReportsPage() {
                         padding: '12px 16px',
                         fontSize: '13px'
                       }}
-                      formatter={(value: any) => [formatCurrency(Number(value)), '']}
+                      formatter={(value: number | string | undefined) => {
+                        if (!value) return [formatCurrency(0), ''];
+                        return [formatCurrency(Number(value)), ''];
+                      }}
                       labelStyle={{ 
                         color: '#111827', 
                         fontWeight: 600,
@@ -1691,9 +1704,11 @@ export default function ReportsPage() {
               </div>
             </div>
           </div>
+          </div>
 
           {/* Detailed Tables */}
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="mb-6 sm:mb-8">
+            <div className="grid lg:grid-cols-2 gap-6">
             {/* Profit per Car */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
@@ -1919,6 +1934,7 @@ export default function ReportsPage() {
               </div>
             </div>
           </div>
+          </div>
 
           {/* Summary Box */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-4 sm:p-6 text-white">
@@ -2002,5 +2018,20 @@ export default function ReportsPage() {
         </Modal>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+export default function ReportsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    }>
+      <ReportsContent />
+    </Suspense>
   );
 }

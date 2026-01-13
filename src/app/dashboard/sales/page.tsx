@@ -13,7 +13,7 @@ import Textarea from '@/components/ui/Textarea';
 import SearchInput from '@/components/ui/SearchInput';
 import Badge from '@/components/ui/Badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { sales as initialSales, cars } from '@/data/dummy';
+import { sales as initialSales, cars, customers as initialCustomers } from '@/data/dummy';
 import {
   formatCurrency,
   formatDate,
@@ -21,13 +21,11 @@ import {
   generateDocNumber,
   getStatusDisplayName,
   getPaymentMethodDisplayName,
-  calculateProfit,
 } from '@/lib/utils';
-import { Sale } from '@/types';
+import { Sale, Customer } from '@/types';
 import {
   Plus,
   Eye,
-  Edit,
   Trash2,
   ShoppingCart,
   DollarSign,
@@ -50,21 +48,29 @@ function SalesContent() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
 
   // Handle highlight from notification
   useEffect(() => {
     if (highlightId) {
       const sale = sales.find(s => s.id === highlightId);
       if (sale) {
-        setHighlightedId(highlightId);
-        // Auto open view modal for highlighted sale
-        setSelectedSale(sale);
-        setIsViewModalOpen(true);
+        // Use setTimeout to avoid setState in effect body
+        setTimeout(() => {
+          setHighlightedId(highlightId);
+          setSelectedSale(sale);
+          setIsViewModalOpen(true);
+        }, 0);
         
         // Remove highlight after 3 seconds
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           setHighlightedId(null);
         }, 3000);
+        
+        return () => clearTimeout(timer);
       }
     }
   }, [highlightId, sales]);
@@ -72,6 +78,7 @@ function SalesContent() {
   // Form state
   const [formData, setFormData] = useState({
     carId: '',
+    customerId: '',
     customerName: '',
     customerPhone: '',
     customerEmail: '',
@@ -82,6 +89,13 @@ function SalesContent() {
     saleDate: new Date().toISOString().split('T')[0],
     notes: '',
   });
+
+  // Filtered customers for dropdown
+  const filteredCustomersList = customers.filter(c => 
+    c.isActive && 
+    (c.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+     c.phone.includes(customerSearchQuery))
+  );
 
   // Available cars for sale
   const availableCars = cars.filter((c) => c.status === 'available' || c.status === 'reserved');
@@ -154,16 +168,19 @@ function SalesContent() {
 
   const handleSubmitSale = (e: React.FormEvent) => {
     e.preventDefault();
+    const sellingPrice = parseInt(formData.sellingPrice);
+    
     const newSale: Sale = {
       id: generateId('sale'),
       saleNumber: generateDocNumber('INV', new Date(), sales.length + 1),
       carId: formData.carId,
+      customerId: formData.customerId || undefined,
       customerName: formData.customerName,
       customerPhone: formData.customerPhone,
       customerEmail: formData.customerEmail,
       customerAddress: formData.customerAddress,
       saleDate: formData.saleDate,
-      sellingPrice: parseInt(formData.sellingPrice),
+      sellingPrice: sellingPrice,
       paymentMethod: formData.paymentMethod as Sale['paymentMethod'],
       downPayment: formData.downPayment ? parseInt(formData.downPayment) : undefined,
       status: 'pending',
@@ -171,10 +188,29 @@ function SalesContent() {
       notes: formData.notes,
       createdAt: new Date().toISOString(),
     };
+    
     setSales([newSale, ...sales]);
+    
+    // Update customer stats if existing customer selected
+    if (formData.customerId) {
+      setCustomers(customers.map(c => 
+        c.id === formData.customerId 
+          ? {
+              ...c,
+              totalPurchases: c.totalPurchases + 1,
+              totalSpent: c.totalSpent + sellingPrice,
+              lastPurchaseDate: formData.saleDate,
+            }
+          : c
+      ));
+    }
+    
     setIsAddModalOpen(false);
+    setSelectedCustomerId('');
+    setCustomerSearchQuery('');
     setFormData({
       carId: '',
+      customerId: '',
       customerName: '',
       customerPhone: '',
       customerEmail: '',
@@ -185,6 +221,35 @@ function SalesContent() {
       saleDate: new Date().toISOString().split('T')[0],
       notes: '',
     });
+  };
+
+  // Handle customer selection from dropdown
+  const handleCustomerSelect = (customer: Customer) => {
+    setSelectedCustomerId(customer.id);
+    setCustomerSearchQuery(customer.name);
+    setFormData({
+      ...formData,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      customerEmail: customer.email || '',
+      customerAddress: customer.address || '',
+    });
+    setShowCustomerDropdown(false);
+  };
+
+  // Handle new customer (clear selection)
+  const handleNewCustomer = () => {
+    setSelectedCustomerId('');
+    setFormData({
+      ...formData,
+      customerId: '',
+      customerName: customerSearchQuery,
+      customerPhone: '',
+      customerEmail: '',
+      customerAddress: '',
+    });
+    setShowCustomerDropdown(false);
   };
 
   const handleCarSelect = (carId: string) => {
@@ -362,25 +427,28 @@ function SalesContent() {
   return (
     <ProtectedRoute requiredModule="sales">
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Penjualan</h1>
-              <p className="text-gray-600">Kelola transaksi penjualan mobil</p>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Penjualan</h1>
+                <p className="text-gray-600 mt-2">Kelola transaksi penjualan mobil</p>
+              </div>
+              {hasPermission('sales', 'create') && (
+                <Button
+                  leftIcon={<Plus className="h-4 w-4" />}
+                  onClick={() => setIsAddModalOpen(true)}
+                >
+                  Buat Penjualan
+                </Button>
+              )}
             </div>
-            {hasPermission('sales', 'create') && (
-              <Button
-                leftIcon={<Plus className="h-4 w-4" />}
-                onClick={() => setIsAddModalOpen(true)}
-              >
-                Buat Penjualan
-              </Button>
-            )}
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6">
             <div className="bg-white rounded-xl p-6 border border-gray-100">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-blue-100 rounded-lg">
@@ -428,24 +496,26 @@ function SalesContent() {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Cari nomor invoice, customer, atau mobil..."
-              className="sm:w-80"
-            />
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              options={[
-                { value: 'all', label: 'Semua Status' },
-                { value: 'completed', label: 'Selesai' },
-                { value: 'pending', label: 'Pending' },
-                { value: 'cancelled', label: 'Dibatalkan' },
-              ]}
-              className="sm:w-48"
-            />
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Cari nomor invoice, customer, atau mobil..."
+                className="sm:w-80"
+              />
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                options={[
+                  { value: 'all', label: 'Semua Status' },
+                  { value: 'completed', label: 'Selesai' },
+                  { value: 'pending', label: 'Pending' },
+                  { value: 'cancelled', label: 'Dibatalkan' },
+                ]}
+                className="sm:w-48"
+              />
+            </div>
           </div>
 
           {/* Sales Table */}
@@ -784,6 +854,85 @@ function SalesContent() {
             {/* Customer Info */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Informasi Customer</h3>
+              
+              {/* Customer Search/Select */}
+              <div className="mb-4 relative">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Cari atau Pilih Customer
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={customerSearchQuery}
+                    onChange={(e) => {
+                      setCustomerSearchQuery(e.target.value);
+                      setShowCustomerDropdown(true);
+                      if (!e.target.value) {
+                        setSelectedCustomerId('');
+                        setFormData({
+                          ...formData,
+                          customerId: '',
+                          customerName: '',
+                          customerPhone: '',
+                          customerEmail: '',
+                          customerAddress: '',
+                        });
+                      }
+                    }}
+                    onFocus={() => setShowCustomerDropdown(true)}
+                    placeholder="Ketik nama atau telepon customer..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {selectedCustomerId && (
+                    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                      Customer Terdaftar
+                    </span>
+                  )}
+                </div>
+                
+                {/* Customer Dropdown */}
+                {showCustomerDropdown && customerSearchQuery && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {filteredCustomersList.length > 0 ? (
+                      <>
+                        {filteredCustomersList.slice(0, 5).map((customer) => (
+                          <button
+                            key={customer.id}
+                            type="button"
+                            onClick={() => handleCustomerSelect(customer)}
+                            className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="font-medium text-gray-900">{customer.name}</div>
+                                <div className="text-sm text-gray-500">{customer.phone}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs text-gray-400">{customer.totalPurchases} pembelian</div>
+                                <div className="text-xs text-green-600">{formatCurrency(customer.totalSpent)}</div>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </>
+                    ) : null}
+                    
+                    {/* Option to add new customer */}
+                    <button
+                      type="button"
+                      onClick={handleNewCustomer}
+                      className="w-full px-4 py-3 text-left hover:bg-green-50 bg-gray-50 border-t border-gray-200"
+                    >
+                      <div className="flex items-center text-green-600">
+                        <Plus className="w-4 h-4 mr-2" />
+                        <span>Tambah customer baru: <strong>{customerSearchQuery}</strong></span>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Customer Details */}
               <div className="grid md:grid-cols-2 gap-4">
                 <Input
                   label="Nama Customer"
@@ -791,6 +940,7 @@ function SalesContent() {
                   onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                   placeholder="Masukkan nama lengkap customer"
                   required
+                  disabled={!!selectedCustomerId}
                 />
                 <Input
                   label="No. Telepon"
@@ -798,6 +948,7 @@ function SalesContent() {
                   onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
                   placeholder="Contoh: 08123456789"
                   required
+                  disabled={!!selectedCustomerId}
                 />
                 <Input
                   label="Email"
@@ -805,14 +956,33 @@ function SalesContent() {
                   value={formData.customerEmail}
                   onChange={(e) => setFormData({ ...formData, customerEmail: e.target.value })}
                   placeholder="contoh@email.com"
+                  disabled={!!selectedCustomerId}
                 />
                 <Input
                   label="Alamat"
                   value={formData.customerAddress}
                   onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
                   placeholder="Alamat lengkap customer"
+                  disabled={!!selectedCustomerId}
                 />
               </div>
+              
+              {selectedCustomerId && (
+                <p className="text-sm text-gray-500 mt-2">
+                  * Data customer otomatis terisi. <button type="button" onClick={() => {
+                    setSelectedCustomerId('');
+                    setCustomerSearchQuery('');
+                    setFormData({
+                      ...formData,
+                      customerId: '',
+                      customerName: '',
+                      customerPhone: '',
+                      customerEmail: '',
+                      customerAddress: '',
+                    });
+                  }} className="text-blue-600 hover:underline">Ganti customer</button>
+                </p>
+              )}
             </div>
 
             {/* Payment Info */}
@@ -895,6 +1065,7 @@ function SalesContent() {
             </div>
           </div>
         </Modal>
+        </div>
       </DashboardLayout>
     </ProtectedRoute>
   );
@@ -902,7 +1073,14 @@ function SalesContent() {
 
 export default function SalesPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-600">Loading...</div></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    }>
       <SalesContent />
     </Suspense>
   );

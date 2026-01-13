@@ -14,7 +14,7 @@ import SearchInput from '@/components/ui/SearchInput';
 import Badge from '@/components/ui/Badge';
 import ImageGallery from '@/components/ui/ImageGallery';
 import { useAuth } from '@/contexts/AuthContext';
-import { cars as initialCars, maintenanceCosts, vendors } from '@/data/dummy';
+import { cars as initialCars, vendors } from '@/data/dummy';
 import {
   formatCurrency,
   formatNumber,
@@ -22,18 +22,13 @@ import {
   getConditionDisplayName,
   getFuelTypeDisplayName,
   getTransmissionDisplayName,
-  calculateHPP,
   calculateProfit,
 } from '@/lib/utils';
-import { Car, MaintenanceCost } from '@/types';
+import { Car } from '@/types';
 import {
   Plus,
-  Eye,
   Edit,
-  Trash2,
   Wrench,
-  Filter,
-  ChevronDown,
 } from 'lucide-react';
 
 function InventoryContent() {
@@ -57,15 +52,19 @@ function InventoryContent() {
     if (highlightId) {
       const car = cars.find(c => c.id === highlightId);
       if (car) {
-        setHighlightedId(highlightId);
-        // Auto open view modal for highlighted car
-        setSelectedCar(car);
-        setIsViewModalOpen(true);
+        // Use setTimeout to avoid setState in effect body
+        setTimeout(() => {
+          setHighlightedId(highlightId);
+          setSelectedCar(car);
+          setIsViewModalOpen(true);
+        }, 0);
         
         // Remove highlight after 3 seconds
-        setTimeout(() => {
+        const timer = setTimeout(() => {
           setHighlightedId(null);
         }, 3000);
+        
+        return () => clearTimeout(timer);
       }
     }
   }, [highlightId, cars]);
@@ -394,44 +393,49 @@ function InventoryContent() {
   return (
     <ProtectedRoute requiredModule="inventory">
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Inventory Mobil</h1>
-              <p className="text-gray-600">Kelola stok mobil bekas</p>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Inventory Mobil</h1>
+                <p className="text-gray-600 mt-2">Kelola stok mobil bekas</p>
+              </div>
+              {hasPermission('inventory', 'create') && (
+                <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleAddCar}>
+                  Tambah Mobil
+                </Button>
+              )}
             </div>
-            {hasPermission('inventory', 'create') && (
-              <Button leftIcon={<Plus className="h-4 w-4" />} onClick={handleAddCar}>
-                Tambah Mobil
-              </Button>
-            )}
           </div>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <SearchInput
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Cari merk, model, atau plat nomor..."
-              className="sm:w-80"
-            />
-            <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              options={[
-                { value: 'all', label: 'Semua Status' },
-                { value: 'available', label: 'Tersedia' },
-                { value: 'sold', label: 'Terjual' },
-                { value: 'reserved', label: 'Dipesan' },
-                { value: 'maintenance', label: 'Perawatan' },
-              ]}
-              className="sm:w-48"
-            />
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <SearchInput
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Cari merk, model, atau plat nomor..."
+                className="sm:w-80"
+              />
+              <Select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                options={[
+                  { value: 'all', label: 'Semua Status' },
+                  { value: 'available', label: 'Tersedia' },
+                  { value: 'sold', label: 'Terjual' },
+                  { value: 'reserved', label: 'Dipesan' },
+                  { value: 'maintenance', label: 'Perawatan' },
+                ]}
+                className="sm:w-48"
+              />
+            </div>
           </div>
 
           {/* Stats Summary */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <div className="bg-white rounded-lg p-4 border border-gray-100">
               <p className="text-sm text-gray-500">Total Mobil</p>
               <p className="text-2xl font-bold text-gray-900">{cars.length}</p>
@@ -459,9 +463,10 @@ function InventoryContent() {
               </p>
             </div>
           </div>
+          </div>
 
           {/* Cars Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
             {filteredCars.map((car) => {
               const isHighlighted = highlightedId === car.id;
               return (
@@ -549,7 +554,7 @@ function InventoryContent() {
 
                   {/* Actions */}
                   <div className="flex gap-1 md:gap-2 mt-3 md:mt-4">
-                    {hasPermission('inventory', 'edit') && car.status !== 'sold' && (
+                    {hasPermission('inventory', 'edit') && (
                       <>
                         <Button
                           variant="secondary"
@@ -952,7 +957,7 @@ function InventoryContent() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           <p className="mt-2 text-sm text-gray-600 font-medium">Belum ada foto yang dipilih</p>
-                          <p className="mt-1 text-xs text-gray-500">Klik tombol "Choose Files" di atas untuk mengunggah foto</p>
+                          <p className="mt-1 text-xs text-gray-500">Klik tombol &quot;Choose Files&quot; di atas untuk mengunggah foto</p>
                         </div>
                       )}
                       
@@ -1203,7 +1208,7 @@ function InventoryContent() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                           <p className="mt-2 text-sm text-gray-600 font-medium">Belum ada foto yang dipilih</p>
-                          <p className="mt-1 text-xs text-gray-500">Klik tombol "Choose Files" di atas untuk mengunggah foto</p>
+                          <p className="mt-1 text-xs text-gray-500">Klik tombol &quot;Choose Files&quot; di atas untuk mengunggah foto</p>
                         </div>
                       )}
                       
@@ -1278,12 +1283,12 @@ function InventoryContent() {
             />
             
             <Select
-              label="Vendor/Bengkel"
+              label="Bengkel/Workshop"
               value={maintenanceForm.vendor}
               onChange={(e) => setMaintenanceForm({ ...maintenanceForm, vendor: e.target.value })}
               options={[
-                { value: '', label: 'Pilih vendor/bengkel (opsional)' },
-                ...vendors.map(v => ({ value: v.name, label: v.name }))
+                { value: '', label: 'Pilih bengkel (opsional)' },
+                ...vendors.filter(v => v.category === 'workshop').map(v => ({ value: v.name, label: v.name }))
               ]}
             />
             
@@ -1353,7 +1358,14 @@ function InventoryContent() {
 
 export default function InventoryPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="text-gray-600">Loading...</div></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    }>
       <InventoryContent />
     </Suspense>
   );

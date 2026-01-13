@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
@@ -56,7 +56,7 @@ const getVendorTypeBadge = (type: string) => {
   return badges[type] || { variant: 'info', label: type };
 };
 
-export default function VendorsPage() {
+function VendorsContent() {
   const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -153,85 +153,91 @@ export default function VendorsPage() {
   return (
     <ProtectedRoute requiredModule="inventory" requiredAction="view">
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Manajemen Vendor</h1>
-              <p className="text-gray-500 mt-1">Kelola data vendor dan performa</p>
+          <div className="mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Manajemen Vendor</h1>
+                <p className="text-gray-500 mt-2">Kelola data vendor dan performa</p>
+              </div>
+              <Button onClick={() => setIsAddModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Vendor
+              </Button>
             </div>
-            <Button onClick={() => setIsAddModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Vendor
-            </Button>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Building2 className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Total Vendor</p>
-                  <p className="text-lg font-bold text-gray-900">{totalVendors}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Vendor Aktif</p>
-                  <p className="text-lg font-bold text-gray-900">{activeVendors}</p>
+          <div className="mb-6 sm:mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Building2 className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Total Vendor</p>
+                    <p className="text-lg font-bold text-gray-900">{totalVendors}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Package className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Total Transaksi</p>
-                  <p className="text-sm font-bold text-gray-900">{formatCurrency(totalTransactionValue)}</p>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <TrendingUp className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Vendor Aktif</p>
+                    <p className="text-lg font-bold text-gray-900">{activeVendors}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Star className="h-5 w-5 text-yellow-600" />
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Package className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Total Transaksi</p>
+                    <p className="text-sm font-bold text-gray-900">{formatCurrency(totalTransactionValue)}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500">Rating Rata-rata</p>
-                  <p className="text-lg font-bold text-gray-900">{avgRating.toFixed(1)} / 5</p>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <Star className="h-5 w-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Rating Rata-rata</p>
+                    <p className="text-lg font-bold text-gray-900">{avgRating.toFixed(1)} / 5</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <SearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="Cari vendor..."
+          <div className="mb-6 sm:mb-8">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    placeholder="Cari vendor..."
+                  />
+                </div>
+                <Select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  options={[
+                    { value: 'all', label: 'Semua Tipe' },
+                    ...vendorTypeOptions,
+                  ]}
                 />
               </div>
-              <Select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                options={[
-                  { value: 'all', label: 'Semua Tipe' },
-                  ...vendorTypeOptions,
-                ]}
-              />
             </div>
           </div>
 
@@ -487,5 +493,20 @@ export default function VendorsPage() {
         </Modal>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+export default function VendorsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    }>
+      <VendorsContent />
+    </Suspense>
   );
 }

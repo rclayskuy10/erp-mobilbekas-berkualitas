@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, Suspense } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Input from '@/components/ui/Input';
@@ -43,7 +43,7 @@ import {
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
-export default function AnalyticsPage() {
+function AnalyticsContent() {
   // Set default date range to current year (Jan 1 to today)
   const now = new Date();
   const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -258,18 +258,20 @@ export default function AnalyticsPage() {
   return (
     <ProtectedRoute requiredModule="reports" requiredAction="view">
       <DashboardLayout>
-        <div className="space-y-6">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Header */}
-          <div className="flex flex-col gap-4">
+          <div className="mb-6 sm:mb-8">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Advanced Analytics</h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Analisis mendalam performa bisnis</p>
+              <p className="text-sm sm:text-base text-gray-600 mt-2">Analisis mendalam performa bisnis</p>
             </div>
-            
-            {/* Date Range Filter */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
+          </div>
+          
+          {/* Date Range Filter */}
+          <div className="mb-6 sm:mb-8">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Dari:</label>
                   <Input
                     type="date"
@@ -278,7 +280,7 @@ export default function AnalyticsPage() {
                     className="w-full"
                   />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <label className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Sampai:</label>
                   <Input
                     type="date"
@@ -292,7 +294,8 @@ export default function AnalyticsPage() {
           </div>
 
           {/* KPI Cards */}
-          <div className="space-y-3 sm:space-y-4">
+          <div className="mb-6 sm:mb-8">
+            <div className="space-y-4 sm:space-y-6">
             {/* Revenue & Profit - Full width on mobile */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {/* Total Revenue */}
@@ -376,10 +379,12 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
 
           {/* Tab Navigation */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1.5">
+          <div className="mb-6 sm:mb-8">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
             <div className="grid grid-cols-3 gap-1.5">
               {tabs.map((tab) => (
                 <button
@@ -397,11 +402,12 @@ export default function AnalyticsPage() {
                 </button>
               ))}
             </div>
+            </div>
           </div>
 
           {/* Sales Analytics Tab */}
           {activeTab === 'sales' && (
-            <div className="space-y-6">
+            <div className="space-y-6 sm:space-y-8">
               {/* Monthly Trend */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-5">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Trend Penjualan Bulanan</h3>
@@ -638,5 +644,20 @@ export default function AnalyticsPage() {
         </div>
       </DashboardLayout>
     </ProtectedRoute>
+  );
+}
+
+export default function AnalyticsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Memuat...</p>
+        </div>
+      </div>
+    }>
+      <AnalyticsContent />
+    </Suspense>
   );
 }

@@ -19,12 +19,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for saved session
-    const savedUser = localStorage.getItem('erp_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    // Check for saved session - use flag to avoid direct setState
+    let mounted = true;
+    
+    const loadUser = () => {
+      const savedUser = localStorage.getItem('erp_user');
+      if (mounted) {
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+        setIsLoading(false);
+      }
+    };
+    
+    loadUser();
+    
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {

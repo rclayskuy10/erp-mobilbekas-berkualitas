@@ -95,10 +95,29 @@ export interface GRN {
 export type PaymentMethod = 'cash' | 'transfer' | 'credit' | 'leasing';
 export type SaleStatus = 'pending' | 'completed' | 'cancelled';
 
+// Customer Types
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  address?: string;
+  idCard?: string;
+  dateOfBirth?: string;
+  occupation?: string;
+  totalPurchases: number;
+  totalSpent: number;
+  lastPurchaseDate?: string;
+  notes?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface Sale {
   id: string;
   saleNumber: string;
   carId: string;
+  customerId?: string; // Link to Customer
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
@@ -171,6 +190,8 @@ export interface RolePermissions {
 }
 
 // Vendor Types
+export type VendorCategory = 'supplier' | 'workshop';
+
 export interface Vendor {
   id: string;
   name: string;
@@ -179,6 +200,7 @@ export interface Vendor {
   email?: string;
   address: string;
   type: 'individual' | 'showroom' | 'leasing' | 'auction';
+  category: VendorCategory; // supplier untuk pembelian, workshop untuk maintenance
   rating: number; // 1-5
   totalTransactions: number;
   totalValue: number;
