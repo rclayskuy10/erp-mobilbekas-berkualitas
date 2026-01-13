@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, Suspense, useEffect } from 'react';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import Modal from '@/components/ui/Modal';
@@ -10,6 +10,7 @@ import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import SearchInput from '@/components/ui/SearchInput';
 import Badge from '@/components/ui/Badge';
+import Skeleton from '@/components/ui/Skeleton';
 import { vendors as initialVendors } from '@/data/dummy';
 import { formatCurrency, generateId } from '@/lib/utils';
 import { Vendor } from '@/types';
@@ -61,13 +62,81 @@ const getVendorTypeBadge = (type: string) => {
   return badges[type] || { variant: 'info', label: type };
 };
 
+// Skeleton component for vendor cards
+function VendorCardsSkeleton() {
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {[...Array(6)].map((_, index) => (
+        <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Skeleton variant="circular" className="w-9 h-9" />
+              <div>
+                <Skeleton className="h-5 w-32 mb-1" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+          
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2">
+              <Skeleton variant="circular" className="w-4 h-4" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton variant="circular" className="w-4 h-4" />
+              <Skeleton className="h-4 w-36" />
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1 mb-4">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} variant="circular" className="w-4 h-4" />
+            ))}
+            <Skeleton className="h-4 w-8 ml-2" />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+            <div>
+              <Skeleton className="h-3 w-16 mb-1" />
+              <Skeleton className="h-5 w-8" />
+            </div>
+            <div>
+              <Skeleton className="h-3 w-20 mb-1" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+          
+          <div className="mt-4 pt-3 border-t border-gray-100">
+            <Skeleton className="h-8 w-full rounded-lg" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function VendorsContent() {
-  const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Simulate data fetching
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setVendors(initialVendors);
+      setIsLoading(false);
+    };
+    loadData();
+  }, []);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -250,8 +319,11 @@ function VendorsContent() {
           </div>
 
           {/* Vendor Cards Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredVendors.map((vendor) => {
+          {isLoading ? (
+            <VendorCardsSkeleton />
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredVendors.map((vendor) => {
               const TypeIcon = getVendorTypeIcon(vendor.type);
               const typeBadge = getVendorTypeBadge(vendor.type);
               return (
@@ -314,9 +386,10 @@ function VendorsContent() {
                 </div>
               );
             })}
-          </div>
+            </div>
+          )}
 
-          {filteredVendors.length === 0 && (
+          {!isLoading && filteredVendors.length === 0 && (
             <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
               <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Tidak ada vendor</h3>
@@ -514,12 +587,52 @@ function VendorsContent() {
 export default function VendorsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Memuat...</p>
-        </div>
-      </div>
+      <ProtectedRoute requiredModule="inventory" requiredAction="view">
+        <DashboardLayout>
+          <div className="p-4 sm:p-6 lg:p-8">
+            {/* Header Skeleton */}
+            <div className="mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <Skeleton className="h-8 w-48 mb-2" />
+                  <Skeleton className="h-4 w-64" />
+                </div>
+                <Skeleton className="h-10 w-36 rounded-lg" />
+              </div>
+            </div>
+            
+            {/* Stats Cards Skeleton */}
+            <div className="mb-6 sm:mb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <div className="flex items-center gap-3">
+                      <Skeleton variant="circular" className="w-9 h-9" />
+                      <div>
+                        <Skeleton className="h-3 w-20 mb-1" />
+                        <Skeleton className="h-6 w-12" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Filters Skeleton */}
+            <div className="mb-6 sm:mb-8">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Skeleton className="h-10 flex-1" />
+                  <Skeleton className="h-10 w-32" />
+                </div>
+              </div>
+            </div>
+            
+            {/* Vendor Cards Skeleton */}
+            <VendorCardsSkeleton />
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
     }>
       <VendorsContent />
     </Suspense>

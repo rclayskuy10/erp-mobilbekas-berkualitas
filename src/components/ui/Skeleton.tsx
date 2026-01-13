@@ -15,7 +15,7 @@ export default function Skeleton({
   width,
   height
 }: SkeletonProps) {
-  const baseClasses = 'animate-pulse bg-gray-300 rounded';
+  const baseClasses = 'animate-pulse bg-gray-300 rounded motion-safe:animate-pulse motion-reduce:bg-gray-200';
   
   const variantClasses = {
     text: 'h-4',

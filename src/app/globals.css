@@ -146,3 +146,32 @@ button svg, .button svg {
     transform: scale(0.98);
   }
 }
+
+/* Ensure skeleton animations work on all devices */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Force enable animations on mobile if they were disabled */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+/* Ensure animations work on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .animate-pulse {
+    animation: skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    will-change: opacity;
+  }
+}
