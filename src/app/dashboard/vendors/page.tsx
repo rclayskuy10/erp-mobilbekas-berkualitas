@@ -36,6 +36,11 @@ const vendorTypeOptions = [
   { value: 'auction', label: 'Lelang' },
 ];
 
+const vendorCategoryOptions = [
+  { value: 'supplier', label: 'Supplier' },
+  { value: 'workshop', label: 'Workshop' },
+];
+
 const getVendorTypeIcon = (type: string) => {
   switch (type) {
     case 'individual': return User;
@@ -71,6 +76,7 @@ function VendorsContent() {
     email: '',
     address: '',
     type: 'individual',
+    category: 'supplier' as 'supplier' | 'workshop',
     paymentTerms: '',
     notes: '',
   });
@@ -108,6 +114,7 @@ function VendorsContent() {
       email: formData.email,
       address: formData.address,
       type: formData.type as Vendor['type'],
+      category: formData.category,
       rating: 0,
       totalTransactions: 0,
       totalValue: 0,
@@ -125,6 +132,7 @@ function VendorsContent() {
       email: '',
       address: '',
       type: 'individual',
+      category: 'supplier' as 'supplier' | 'workshop',
       paymentTerms: '',
       notes: '',
     });
@@ -450,12 +458,19 @@ function VendorsContent() {
                 placeholder="cth: vendor@email.com"
               />
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid md:grid-cols-3 gap-4">
               <Select
                 label="Tipe Vendor"
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 options={vendorTypeOptions}
+                required
+              />
+              <Select
+                label="Kategori"
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value as 'supplier' | 'workshop' })}
+                options={vendorCategoryOptions}
                 required
               />
               <Input
