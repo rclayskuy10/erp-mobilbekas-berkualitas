@@ -216,7 +216,7 @@ function UsersContent() {
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder="Cari nama atau email..."
-              className="max-w-md"
+              className="w-full"
             />
           </div>
 
