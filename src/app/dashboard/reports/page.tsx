@@ -53,10 +53,31 @@ function ReportsContent() {
     amount: '',
     date: new Date().toISOString().split('T')[0],
   });
+  
+  // Date Range Filter State
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
-  // Calculate financial data
-  const completedSales = sales.filter((s) => s.status === 'completed');
-  const soldCars = cars.filter((c) => c.status === 'sold');
+  // Filter by date range
+  const filterByDateRange = (date: string) => {
+    if (!startDate && !endDate) return true;
+    const itemDate = new Date(date);
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+    
+    if (start && end) {
+      return itemDate >= start && itemDate <= end;
+    } else if (start) {
+      return itemDate >= start;
+    } else if (end) {
+      return itemDate <= end;
+    }
+    return true;
+  };
+
+  // Calculate financial data with date filter
+  const completedSales = sales.filter((s) => s.status === 'completed' && filterByDateRange(s.saleDate));
+  const soldCars = cars.filter((c) => c.status === 'sold' && completedSales.some(s => s.carId === c.id));
 
   // Total Revenue (from completed sales)
   const totalRevenue = completedSales.reduce((sum, s) => sum + s.sellingPrice, 0);
@@ -67,8 +88,9 @@ function ReportsContent() {
   // Gross Profit
   const grossProfit = totalRevenue - totalHPP;
 
-  // Total Expenses (operational)
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  // Total Expenses (operational) with date filter
+  const filteredExpenses = expenses.filter((e) => filterByDateRange(e.date));
+  const totalExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
   // Net Profit
   const netProfit = grossProfit - totalExpenses;
@@ -95,14 +117,14 @@ function ReportsContent() {
     netProfit: d.pendapatan - d.hpp - d.biaya,
   }));
 
-  // Expense breakdown by category
+  // Expense breakdown by category with date filter
   const expensesByCategory = useMemo(() => {
     const categories: Record<string, number> = {};
-    expenses.forEach((e) => {
+    filteredExpenses.forEach((e) => {
       categories[e.category] = (categories[e.category] || 0) + e.amount;
     });
     return Object.entries(categories).map(([name, value]) => ({ name, value }));
-  }, [expenses]);
+  }, [filteredExpenses]);
 
   const COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#8b5cf6', '#f97316'];
 
@@ -137,6 +159,18 @@ function ReportsContent() {
 
   // Export handlers
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  
+  // Date range text for PDF header
+  const dateRangeText = useMemo(() => {
+    if (startDate && endDate) {
+      return `${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`;
+    } else if (startDate) {
+      return `Sejak ${new Date(startDate).toLocaleDateString('id-ID')}`;
+    } else if (endDate) {
+      return `Hingga ${new Date(endDate).toLocaleDateString('id-ID')}`;
+    }
+    return 'Semua Periode';
+  }, [startDate, endDate]);
 
   // SVG Icons for PDF (Lucide-style)
   const pdfIcons = {
@@ -383,7 +417,7 @@ function ReportsContent() {
       <body>
         <div class="header">
           <h1>${pdfIcons.barChart} Laporan Keuangan Lengkap</h1>
-          <p class="subtitle">Periode: ${currentDate}</p>
+          <p class="subtitle">Periode: ${dateRangeText}</p>
           <p class="company">ERP Mobil Second - Showroom Management System</p>
         </div>
 
@@ -404,7 +438,7 @@ function ReportsContent() {
             <div class="icon red">${pdfIcons.trendingDown}</div>
             <div class="label">Total Biaya</div>
             <div class="value">${formatCurrency(totalExpenses)}</div>
-            <div class="sub">${expenses.length} transaksi</div>
+            <div class="sub">${filteredExpenses.length} transaksi</div>
           </div>
           <div class="summary-card ${netProfit >= 0 ? 'positive green' : 'negative red'}">
             <div class="icon ${netProfit >= 0 ? 'green' : 'red'}">${pdfIcons.wallet}</div>
@@ -469,7 +503,7 @@ function ReportsContent() {
               </tr>
             </thead>
             <tbody>
-              ${expenses.map((expense, idx) => `
+              ${filteredExpenses.map((expense, idx) => `
                 <tr>
                   <td class="text-center">${idx + 1}</td>
                   <td>${new Date(expense.date).toLocaleDateString('id-ID')}</td>
@@ -551,7 +585,7 @@ function ReportsContent() {
         <div class="header">
           <h1>${pdfIcons.car} Laporan Profit per Unit</h1>
           <p class="subtitle">Analisis Profitabilitas Penjualan Kendaraan</p>
-          <p class="company">Periode: ${currentDate}</p>
+          <p class="company">Periode: ${dateRangeText}</p>
         </div>
 
         <div class="summary triple">
@@ -663,7 +697,7 @@ function ReportsContent() {
         <div class="header">
           <h1>${pdfIcons.receipt} Laporan Biaya Operasional</h1>
           <p class="subtitle">Analisis Pengeluaran & Efisiensi Biaya</p>
-          <p class="company">Periode: ${currentDate}</p>
+          <p class="company">Periode: ${dateRangeText}</p>
         </div>
 
         <div class="summary">
@@ -671,7 +705,7 @@ function ReportsContent() {
             <div class="icon red">${pdfIcons.trendingDown}</div>
             <div class="label">Total Pengeluaran</div>
             <div class="value">${formatCurrency(totalExpenses)}</div>
-            <div class="sub">${expenses.length} transaksi tercatat</div>
+            <div class="sub">${filteredExpenses.length} transaksi tercatat</div>
           </div>
           <div class="summary-card blue">
             <div class="icon blue">${pdfIcons.pieChart}</div>
@@ -696,7 +730,7 @@ function ReportsContent() {
               ${expensesByCategory.map(cat => `
                 <tr>
                   <td><strong>${cat.name}</strong></td>
-                  <td class="text-right">${expenses.filter(e => e.category === cat.name).length}x</td>
+                  <td class="text-right">${filteredExpenses.filter(e => e.category === cat.name).length}x</td>
                   <td class="text-right negative"><strong>${formatCurrency(cat.value)}</strong></td>
                   <td class="text-right">
                     <span style="background:#fee2e2;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;">
@@ -707,7 +741,7 @@ function ReportsContent() {
               `).join('')}
               <tr class="total-row">
                 <td><strong>TOTAL</strong></td>
-                <td class="text-right"><strong>${expenses.length}x</strong></td>
+                <td class="text-right"><strong>${filteredExpenses.length}x</strong></td>
                 <td class="text-right negative"><strong>${formatCurrency(totalExpenses)}</strong></td>
                 <td class="text-right"><strong>100%</strong></td>
               </tr>
@@ -729,7 +763,7 @@ function ReportsContent() {
               </tr>
             </thead>
             <tbody>
-              ${expenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense, idx) => `
+              ${filteredExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense, idx) => `
                 <tr>
                   <td class="text-center">${idx + 1}</td>
                   <td>${new Date(expense.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
@@ -773,7 +807,7 @@ function ReportsContent() {
         <div class="header">
           <h1>${pdfIcons.trendingUp} Laporan Laba Rugi</h1>
           <p class="subtitle">Income Statement / Profit & Loss Report</p>
-          <p class="company">Periode: ${currentDate}</p>
+          <p class="company">Periode: ${dateRangeText}</p>
         </div>
 
         <div class="section">
@@ -890,7 +924,7 @@ function ReportsContent() {
         <div class="header">
           <h1>${pdfIcons.clipboard} Executive Summary</h1>
           <p class="subtitle">Ringkasan Kinerja Bisnis</p>
-          <p class="company">Periode: ${currentDate}</p>
+          <p class="company">Periode: ${dateRangeText}</p>
         </div>
 
         <div class="highlight-box ${netProfit >= 0 ? '' : 'danger'}" style="text-align:center;margin-bottom:40px;">
@@ -1094,6 +1128,45 @@ function ReportsContent() {
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Laporan Keuangan</h1>
                 <p className="text-sm sm:text-base text-gray-600 mt-2">Analisis profit dan pengeluaran bisnis</p>
               </div>
+            
+            {/* Date Range Filter */}
+            <div className="flex flex-wrap items-end gap-3 w-full sm:w-auto">
+              <div className="flex-1 sm:flex-none min-w-[140px]">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Tanggal Mulai
+                </label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+              <div className="flex-1 sm:flex-none min-w-[140px]">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Tanggal Akhir
+                </label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+              {(startDate || endDate) && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                  }}
+                  className="text-sm whitespace-nowrap"
+                >
+                  Reset Filter
+                </Button>
+              )}
+            </div>
+            
             <div className="flex flex-wrap gap-2">
               <Button
                 variant="secondary"
@@ -1900,7 +1973,7 @@ function ReportsContent() {
                       </tr>
                     </thead>
                     <tbody>
-                      {[...expenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense) => (
+                      {[...filteredExpenses].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((expense) => (
                         <tr key={expense.id} className="border-b border-gray-50">
                           <td className="py-3 px-2 text-sm text-gray-600">
                             {expense.date}
