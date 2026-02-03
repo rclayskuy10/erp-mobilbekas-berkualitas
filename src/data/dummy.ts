@@ -172,6 +172,21 @@ export const users: User[] = [
     salesTarget: 500000000, // 500jt per bulan
     commissionRate: 2.5,
   },
+  {
+    id: 'user-006',
+    name: 'Rudi Hermawan',
+    email: 'rudi.hermawan@mobilbekas.com',
+    password: 'rudi123',
+    role: 'staff',
+    avatar: '/avatars/rudi.png',
+    phone: '08166789012',
+    createdAt: '2025-05-15T00:00:00Z',
+    joinDate: '2025-05-15',
+    isActive: true,
+    isSalesPerson: true,
+    salesTarget: 550000000, // 550jt per bulan
+    commissionRate: 2.8,
+  },
 ];
 
 // Dummy Maintenance Costs
