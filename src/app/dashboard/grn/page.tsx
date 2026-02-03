@@ -498,7 +498,6 @@ function PembelianContent() {
                     }
                   }}
                   options={[
-                    { value: '', label: 'Pilih vendor...' },
                     ...vendors.filter(v => v.isActive).map(v => ({
                       value: v.id,
                       label: `${v.name} - ${v.phone}`
@@ -545,16 +544,14 @@ function PembelianContent() {
                     onChange={(e) => {
                       const value = e.target.value;
                       setFormData({ ...formData, brand: value });
-                      if (value !== 'Lainnya' && value !== '__new__') {
+                      if (value !== '__new__') {
                         setCustomBrand('');
                         setNewBrandName('');
                       }
                     }}
                     options={[
-                      { value: '', label: 'Pilih merk...' },
                       ...carBrands.map(brand => ({ value: brand, label: brand })),
                       { value: '__new__', label: '+ Tambah Merk Baru' },
-                      { value: 'Lainnya', label: 'Lainnya (sementara)' },
                     ]}
                     required
                   />
@@ -567,18 +564,6 @@ function PembelianContent() {
                       onChange={(e) => setNewBrandName(e.target.value)}
                       placeholder="Masukkan nama merk baru"
                       helperText="Merk ini akan ditambahkan ke daftar merk permanen"
-                      required
-                    />
-                  </div>
-                )}
-                {formData.brand === 'Lainnya' && (
-                  <div className="md:col-span-3">
-                    <Input
-                      label="Merk Lainnya"
-                      value={customBrand}
-                      onChange={(e) => setCustomBrand(e.target.value)}
-                      placeholder="Masukkan merk mobil (hanya untuk transaksi ini)"
-                      helperText="Untuk merk yang jarang digunakan"
                       required
                     />
                   </div>

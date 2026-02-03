@@ -853,7 +853,6 @@ function SalesContent() {
                 value={formData.carId}
                 onChange={(e) => handleCarSelect(e.target.value)}
                 options={[
-                  { value: '', label: 'Pilih mobil...' },
                   ...availableCars.map((car) => ({
                     value: car.id,
                     label: `${car.specs.brand} ${car.specs.model} (${car.specs.plateNumber}) - ${formatCurrency(car.sellingPrice)}`,
@@ -1003,7 +1002,6 @@ function SalesContent() {
                   value={formData.customerSource}
                   onChange={(e) => setFormData({ ...formData, customerSource: e.target.value as CustomerSource })}
                   options={[
-                    { value: '', label: 'Pilih sumber informasi...' },
                     { value: 'olx', label: 'OLX' },
                     { value: 'instagram', label: 'Instagram' },
                     { value: 'facebook', label: 'Facebook' },
@@ -1024,7 +1022,6 @@ function SalesContent() {
                   value={formData.soldBy}
                   onChange={(e) => setFormData({ ...formData, soldBy: e.target.value })}
                   options={[
-                    { value: '', label: 'Pilih sales person...' },
                     ...users
                       .filter(u => u.isSalesPerson && u.isActive)
                       .map(u => ({

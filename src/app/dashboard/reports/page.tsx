@@ -62,8 +62,7 @@ function ReportsContent() {
     'Listrik & Air',
     'Makan',
     'Marketing',
-    'Transportasi',
-    'Lain-lain'
+    'Transportasi'
   ]);
   const [newCategoryName, setNewCategoryName] = useState('');
   
@@ -2076,7 +2075,6 @@ function ReportsContent() {
                 value={expenseForm.category}
                 onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
                 options={[
-                  { value: '', label: 'Pilih kategori...' },
                   ...expenseCategories.map(cat => ({ value: cat, label: cat })),
                   { value: '__new__', label: '+ Tambah Kategori Baru' }
                 ]}
