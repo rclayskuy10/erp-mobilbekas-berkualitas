@@ -49,7 +49,19 @@ function PembelianContent() {
 
   const [isNewVendor, setIsNewVendor] = useState(false);
   const [customBrand, setCustomBrand] = useState('');
-  const [photosText, setPhotosText] = useState('');
+  const [newBrandName, setNewBrandName] = useState('');
+  const [uploadedPhotos, setUploadedPhotos] = useState<Array<{url: string, file?: File}>>([]);
+  const [carBrands, setCarBrands] = useState([
+    'Toyota',
+    'Honda',
+    'Mitsubishi',
+    'Suzuki',
+    'Daihatsu',
+    'Nissan',
+    'Mazda',
+    'BMW',
+    'Mercedes-Benz',
+  ]);
 
   // Filter GRNs
   const filteredGrns = useMemo(() => {
@@ -91,10 +103,48 @@ function PembelianContent() {
     }
   };
 
+  // Handle photo file upload
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setUploadedPhotos(prev => [...prev, {
+            url: reader.result as string,
+            file: file
+          }]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    // Reset input
+    e.target.value = '';
+  };
+
+  const removePhoto = (index: number) => {
+    setUploadedPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmitGrn = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Handle new brand
+    if (formData.brand === '__new__') {
+      if (!newBrandName.trim()) {
+        alert('Nama merk baru harus diisi');
+        return;
+      }
+      // Add new brand to the list
+      if (!carBrands.includes(newBrandName.trim())) {
+        setCarBrands([...carBrands, newBrandName.trim()].sort());
+      }
+    }
+    
     // In real app, this would create both car and GRN
-    const photosArray = photosText.split('\n').filter(url => url.trim() !== '');
+    const photosArray = uploadedPhotos.map(p => p.url);
     
     const newGrn: GRN = {
       id: generateId('grn'),
@@ -134,7 +184,8 @@ function PembelianContent() {
     });
     setIsNewVendor(false);
     setCustomBrand('');
-    setPhotosText('');
+    setNewBrandName('');
+    setUploadedPhotos([]);
   };
 
   return (
@@ -494,33 +545,40 @@ function PembelianContent() {
                     onChange={(e) => {
                       const value = e.target.value;
                       setFormData({ ...formData, brand: value });
-                      if (value !== 'Lainnya') {
+                      if (value !== 'Lainnya' && value !== '__new__') {
                         setCustomBrand('');
+                        setNewBrandName('');
                       }
                     }}
                     options={[
                       { value: '', label: 'Pilih merk...' },
-                      { value: 'Toyota', label: 'Toyota' },
-                      { value: 'Honda', label: 'Honda' },
-                      { value: 'Mitsubishi', label: 'Mitsubishi' },
-                      { value: 'Suzuki', label: 'Suzuki' },
-                      { value: 'Daihatsu', label: 'Daihatsu' },
-                      { value: 'Nissan', label: 'Nissan' },
-                      { value: 'Mazda', label: 'Mazda' },
-                      { value: 'BMW', label: 'BMW' },
-                      { value: 'Mercedes-Benz', label: 'Mercedes-Benz' },
-                      { value: 'Lainnya', label: 'Lainnya' },
+                      ...carBrands.map(brand => ({ value: brand, label: brand })),
+                      { value: '__new__', label: '+ Tambah Merk Baru' },
+                      { value: 'Lainnya', label: 'Lainnya (sementara)' },
                     ]}
                     required
                   />
                 </div>
+                {formData.brand === '__new__' && (
+                  <div className="md:col-span-3">
+                    <Input
+                      label="Nama Merk Baru"
+                      value={newBrandName}
+                      onChange={(e) => setNewBrandName(e.target.value)}
+                      placeholder="Masukkan nama merk baru"
+                      helperText="Merk ini akan ditambahkan ke daftar merk permanen"
+                      required
+                    />
+                  </div>
+                )}
                 {formData.brand === 'Lainnya' && (
                   <div className="md:col-span-3">
                     <Input
                       label="Merk Lainnya"
                       value={customBrand}
                       onChange={(e) => setCustomBrand(e.target.value)}
-                      placeholder="Masukkan merk mobil"
+                      placeholder="Masukkan merk mobil (hanya untuk transaksi ini)"
+                      helperText="Untuk merk yang jarang digunakan"
                       required
                     />
                   </div>
@@ -612,13 +670,63 @@ function PembelianContent() {
                 />
               </div>
               <div className="mt-4">
-                <Textarea
-                  label="Foto Mobil (URL)"
-                  value={photosText}
-                  onChange={(e) => setPhotosText(e.target.value)}
-                  placeholder="URL foto (pisahkan dengan enter untuk multiple)&#10;Contoh:&#10;https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"
-                  rows={4}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Foto Mobil
+                </label>
+                
+                {/* Upload Area */}
+                <input
+                  type="file"
+                  id="photo-upload"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoUpload}
+                  className="hidden"
                 />
+                <label
+                  htmlFor="photo-upload"
+                  className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                >
+                  <div className="text-3xl text-gray-400 mb-1">📷</div>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold text-blue-600">Klik untuk upload</span> atau drag & drop
+                  </p>
+                  <p className="text-xs text-gray-500">PNG, JPG, JPEG (Max 5MB)</p>
+                </label>
+
+                {/* Photo Counter */}
+                {uploadedPhotos.length > 0 && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    {uploadedPhotos.length} foto dipilih
+                  </p>
+                )}
+
+                {/* Photo Previews */}
+                {uploadedPhotos.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                    {uploadedPhotos.map((photo, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={photo.url}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1 px-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                          Foto {index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="mt-4">
                 <Textarea

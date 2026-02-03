@@ -51,6 +51,7 @@ function SalesContent() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+  const [uploadedPhotos, setUploadedPhotos] = useState<Array<{url: string, file?: File}>>([]);
 
   // Handle highlight from notification
   useEffect(() => {
@@ -166,11 +167,8 @@ function SalesContent() {
     e.preventDefault();
     const sellingPrice = parseInt(formData.sellingPrice);
     
-    // Process photos array from textarea
-    const photosArray = formData.photos
-      .split('\n')
-      .map(url => url.trim())
-      .filter(url => url.length > 0);
+    // Process photos array from uploaded files
+    const photosArray = uploadedPhotos.map(p => p.url);
     
     const newSale: Sale = {
       id: generateId('sale'),
@@ -213,6 +211,7 @@ function SalesContent() {
     setIsAddModalOpen(false);
     setSelectedCustomerId('');
     setCustomerSearchQuery('');
+    setUploadedPhotos([]);
     setFormData({
       carId: '',
       customerId: '',
@@ -229,6 +228,31 @@ function SalesContent() {
       photos: '',
       notes: '',
     });
+  };
+
+  // Handle photo file upload
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setUploadedPhotos(prev => [...prev, {
+            url: reader.result as string,
+            file: file
+          }]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    // Reset input
+    e.target.value = '';
+  };
+
+  const removePhoto = (index: number) => {
+    setUploadedPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   // Handle customer selection from dropdown
@@ -1052,13 +1076,63 @@ function SalesContent() {
                 )}
               </div>
               <div className="mt-4">
-                <Textarea
-                  label="Foto Dokumentasi"
-                  value={formData.photos}
-                  onChange={(e) => setFormData({ ...formData, photos: e.target.value })}
-                  placeholder="URL foto (pisahkan dengan enter untuk multiple)"
-                  rows={3}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Foto Dokumentasi
+                </label>
+                
+                {/* Upload Area */}
+                <input
+                  type="file"
+                  id="photo-upload-sales"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoUpload}
+                  className="hidden"
                 />
+                <label
+                  htmlFor="photo-upload-sales"
+                  className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                >
+                  <div className="text-3xl text-gray-400 mb-1">📷</div>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold text-blue-600">Klik untuk upload</span> atau drag & drop
+                  </p>
+                  <p className="text-xs text-gray-500">PNG, JPG, JPEG (Max 5MB)</p>
+                </label>
+
+                {/* Photo Counter */}
+                {uploadedPhotos.length > 0 && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    {uploadedPhotos.length} foto dipilih
+                  </p>
+                )}
+
+                {/* Photo Previews */}
+                {uploadedPhotos.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                    {uploadedPhotos.map((photo, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={photo.url}
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-lg"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs py-1 px-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                          Foto {index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="mt-4">
                 <Textarea

@@ -19,6 +19,7 @@ function CustomerContent() {
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [filterCustomerType, setFilterCustomerType] = useState<'all' | 'new' | 'returning'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -101,6 +102,22 @@ function CustomerContent() {
     setShowDetailModal(true);
   };
 
+  // Helper function to determine customer type
+  const getCustomerType = (customer: Customer): 'new' | 'returning' => {
+    if (!customer.lastPurchaseDate) return 'new';
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const lastPurchase = new Date(customer.lastPurchaseDate);
+    return lastPurchase >= sixMonthsAgo ? 'new' : 'returning';
+  };
+
+  const getCustomerTypeBadge = (customer: Customer) => {
+    const type = getCustomerType(customer);
+    return type === 'new' 
+      ? { label: 'Customer Baru', variant: 'success' as const }
+      : { label: 'Customer Lama', variant: 'info' as const };
+  };
+
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch = 
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -112,11 +129,19 @@ function CustomerContent() {
       (filterStatus === 'active' && customer.isActive) ||
       (filterStatus === 'inactive' && !customer.isActive);
 
-    return matchesSearch && matchesFilter;
+    const customerType = getCustomerType(customer);
+    const matchesTypeFilter = 
+      filterCustomerType === 'all' ||
+      (filterCustomerType === 'new' && customerType === 'new') ||
+      (filterCustomerType === 'returning' && customerType === 'returning');
+
+    return matchesSearch && matchesFilter && matchesTypeFilter;
   });
 
   const totalCustomers = customers.length;
   const activeCustomers = customers.filter(c => c.isActive).length;
+  const newCustomers = customers.filter(c => getCustomerType(c) === 'new').length;
+  const returningCustomers = customers.filter(c => getCustomerType(c) === 'returning').length;
   const totalPurchases = customers.reduce((sum, c) => sum + c.totalPurchases, 0);
   const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
 
@@ -333,8 +358,9 @@ function CustomerContent() {
                 <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-gray-900">{activeCustomers}</div>
-            <div className="text-xs sm:text-sm text-gray-600">Customer Aktif</div>
+            <div className="text-xl sm:text-2xl font-bold text-gray-900">{newCustomers}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Customer Baru</div>
+            <div className="text-xs text-gray-500 mt-1">&lt;6 bulan</div>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-100">
@@ -343,8 +369,9 @@ function CustomerContent() {
                 <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-bold text-gray-900">{totalPurchases}</div>
-            <div className="text-xs sm:text-sm text-gray-600">Total Transaksi</div>
+            <div className="text-xl sm:text-2xl font-bold text-gray-900">{returningCustomers}</div>
+            <div className="text-xs sm:text-sm text-gray-600">Customer Lama</div>
+            <div className="text-xs text-gray-500 mt-1">&gt;6 bulan</div>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-100">
@@ -383,6 +410,16 @@ function CustomerContent() {
                 <option value="all">Semua Status</option>
                 <option value="active">Aktif</option>
                 <option value="inactive">Tidak Aktif</option>
+              </select>
+
+              <select
+                value={filterCustomerType}
+                onChange={(e) => setFilterCustomerType(e.target.value as any)}
+                className="flex-1 sm:flex-none sm:w-auto px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">Semua Tipe</option>
+                <option value="new">Customer Baru (&lt;6 bulan)</option>
+                <option value="returning">Customer Lama (&gt;6 bulan)</option>
               </select>
 
               <div className="flex gap-2">
@@ -426,9 +463,14 @@ function CustomerContent() {
                     <div className="font-semibold text-gray-900 text-base">{customer.name}</div>
                     <div className="text-sm text-gray-500">{customer.id}</div>
                   </div>
-                  <Badge variant={customer.isActive ? 'success' : 'warning'} size="sm">
-                    {customer.isActive ? 'Aktif' : 'Tidak Aktif'}
-                  </Badge>
+                  <div className="flex gap-1">
+                    <Badge variant={customer.isActive ? 'success' : 'warning'} size="sm">
+                      {customer.isActive ? 'Aktif' : 'Tidak Aktif'}
+                    </Badge>
+                    <Badge variant={getCustomerTypeBadge(customer).variant} size="sm">
+                      {getCustomerTypeBadge(customer).label}
+                    </Badge>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3 mb-3">
@@ -525,6 +567,9 @@ function CustomerContent() {
                     Last Purchase
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Tipe
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -576,6 +621,11 @@ function CustomerContent() {
                       <div className="text-sm text-gray-900">
                         {formatDate(customer.lastPurchaseDate)}
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge variant={getCustomerTypeBadge(customer).variant}>
+                        {getCustomerTypeBadge(customer).label}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={customer.isActive ? 'success' : 'warning'}>
